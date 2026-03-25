@@ -31,6 +31,8 @@ add_executable(LastCarriage src
         src/Player.cpp
         src/Player.h
         src/Camera.h
+        src/Enemy.cpp
+        src/Enemy.h
 )
 
 target_link_libraries(LastCarriage

@@ -52,6 +52,8 @@ void Player::handleInput(const bool* keyStates) {
         dx += 1.0f;
     }
 
+    // Attack spacebar
+    // Jump Lshift
     x += dx * speed / 60.0f;
     y += dy * speed / 60.0f;
 

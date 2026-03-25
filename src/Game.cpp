@@ -74,6 +74,13 @@ bool Game::init(const char* title, int width, int height) {
     camera.w = static_cast<float>(width);
     camera.h = static_cast<float>(height);
 
+    // Load an enemy
+    // starts at (300,300), patrolls from x = 300 x = 500
+    if (!enemy.init(renderer, "../assets/enemy.png", 300.0f, 300.0f, 300.0f, 500.0f)) {
+        std::cout << "Failed to initialize enemy. \n";
+        return false;
+    }
+
     // Previous tick
     lastCounter = SDL_GetTicks();
 
@@ -97,6 +104,12 @@ void Game::handleEvents() {
         if (event.type == SDL_EVENT_QUIT) {
             isRunning = false;
         }
+
+        if (event.type == SDL_EVENT_KEY_DOWN) {
+            if (event.key.scancode == SDL_SCANCODE_SPACE) {
+                enemy.takeDamage(1);
+            }
+        }
     }
 
     const bool* keyStates = SDL_GetKeyboardState(nullptr);
@@ -104,6 +117,7 @@ void Game::handleEvents() {
 }
 
 void Game::update() {
+    // Camera
     Uint64 currentCounter = SDL_GetTicks();
     float deltaTime = (currentCounter - lastCounter) / 1000.0f;
     lastCounter = currentCounter;
@@ -131,10 +145,30 @@ void Game::update() {
     }
 
     // Camera debugging
-    std::cout << "Player: " << player.getX() << ", " << player.getY() << std::endl;
-    std::cout << "Camera: " << camera.x << ", " << camera.y << std::endl;
-    std::cout << "Map pixels: " << map.getWidth() * map.getTileWidth()
-              << ", " << map.getHeight() * map.getTileHeight() << std::endl;
+    // std::cout << "Player: " << player.getX() << ", " << player.getY() << std::endl;
+    // std::cout << "Camera: " << camera.x << ", " << camera.y << std::endl;
+    // std::cout << "Map pixels: " << map.getWidth() * map.getTileWidth()
+    //           << ", " << map.getHeight() * map.getTileHeight() << std::endl;
+
+    // Enemy
+    SDL_FRect playerBounds{player.getX(), player.getY(), player.getWidth(), player.getHeight()};
+    SDL_FRect enemyBounds = enemy.getBounds();
+
+    if (SDL_HasRectIntersectionFloat(&playerBounds, &enemyBounds)) {
+        std::cout << "Enemy encountered! \n";
+    }
+
+    enemy.update(deltaTime, player.getX(), player.getY());
+    // Enemy debugging
+    if (enemy.getState() == EnemyState::Idle) {
+        std::cout << "Enemy state: Idle\n";
+    }
+    else if (enemy.getState() == EnemyState::Patrol) {
+        std::cout << "Enemy state: Patrol\n";
+    }
+    else if (enemy.getState() == EnemyState::Chase) {
+        std::cout << "Enemy state: Chase\n";
+    }
 
 }
 
@@ -145,6 +179,7 @@ void Game::render() {
 
     map.render(renderer, tilesetTexture, camRect);
     player.render(renderer, camRect);
+    enemy.render(renderer, camRect);
     // Draw collision rectangles in red
     // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     // for (const SDL_FRect& rect : map.getColliders()) {
@@ -172,6 +207,7 @@ void Game::clean() {
     }
 
     player.clean();
+    enemy.clean();
 
     if (renderer) {
         SDL_DestroyRenderer(renderer);

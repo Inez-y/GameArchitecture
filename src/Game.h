@@ -5,6 +5,7 @@
 #include "Map.h"
 #include "Player.h"
 #include "Camera.h"
+#include "Enemy.h"
 
 class Game {
 public:
@@ -28,6 +29,7 @@ private:
     Map map;
     Player player;
     Camera camera;
+    Enemy enemy;
 
     // Previous tick
     Uint64 lastCounter;
