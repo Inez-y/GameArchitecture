@@ -58,6 +58,25 @@ bool Game::init(const char* title, int width, int height) {
     std::cout << "Item spawn count: " << map.getItemSpawnPoints().size() << std::endl;
     std::cout << "Collider count: " << map.getColliders().size() << std::endl;
 
+    // Load a player
+    if (!player.init(renderer, "../assets/player.png", 100.0f, 100.0f)) {
+        std::cout << "Failed to initialize player.\n";
+        SDL_DestroyTexture(tilesetTexture);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return false;
+    }
+
+    // Load a camera
+    camera.x = 0.0;
+    camera.y = 0.0;
+    camera.w = static_cast<float>(width);
+    camera.h = static_cast<float>(height);
+
+    // Previous tick
+    lastCounter = SDL_GetTicks();
+
     isRunning = true;
     return true;
 }
@@ -79,17 +98,53 @@ void Game::handleEvents() {
             isRunning = false;
         }
     }
+
+    const bool* keyStates = SDL_GetKeyboardState(nullptr);
+    player.handleInput(keyStates);
 }
 
 void Game::update() {
+    Uint64 currentCounter = SDL_GetTicks();
+    float deltaTime = (currentCounter - lastCounter) / 1000.0f;
+    lastCounter = currentCounter;
+
+    float mapPixelWidth = static_cast<float>(map.getWidth() * map.getTileWidth());
+    float mapPixelHeight = static_cast<float>(map.getHeight() * map.getTileHeight());
+
+    player.update(deltaTime, mapPixelWidth, mapPixelHeight);
+
+    camera.x = player.getX() + player.getWidth() / 2.0f - camera.w / 2.0f;
+    camera.y = player.getY() + player.getHeight() / 2.0f - camera.h / 2.0f;
+
+    if (mapPixelWidth <= camera.w) {
+        camera.x = 0.0f;
+    } else {
+        if (camera.x < 0.0f) camera.x = 0.0f;
+        if (camera.x > mapPixelWidth - camera.w) camera.x = mapPixelWidth - camera.w;
+    }
+
+    if (mapPixelHeight <= camera.h) {
+        camera.y = 0.0f;
+    } else {
+        if (camera.y < 0.0f) camera.y = 0.0f;
+        if (camera.y > mapPixelHeight - camera.h) camera.y = mapPixelHeight - camera.h;
+    }
+
+    // Camera debugging
+    std::cout << "Player: " << player.getX() << ", " << player.getY() << std::endl;
+    std::cout << "Camera: " << camera.x << ", " << camera.y << std::endl;
+    std::cout << "Map pixels: " << map.getWidth() * map.getTileWidth()
+              << ", " << map.getHeight() * map.getTileHeight() << std::endl;
+
 }
 
 void Game::render() {
     SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);
     SDL_RenderClear(renderer);
+    SDL_FRect camRect{camera.x, camera.y, camera.w, camera.h};
 
-    map.render(renderer, tilesetTexture);
-
+    map.render(renderer, tilesetTexture, camRect);
+    player.render(renderer, camRect);
     // Draw collision rectangles in red
     // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     // for (const SDL_FRect& rect : map.getColliders()) {
@@ -115,6 +170,8 @@ void Game::clean() {
         SDL_DestroyTexture(tilesetTexture);
         tilesetTexture = nullptr;
     }
+
+    player.clean();
 
     if (renderer) {
         SDL_DestroyRenderer(renderer);

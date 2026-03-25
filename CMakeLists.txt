@@ -28,6 +28,9 @@ add_executable(LastCarriage src
         src/Game.h
         assets/tinyxml2.h
         assets/tinyxml2.cpp
+        src/Player.cpp
+        src/Player.h
+        src/Camera.h
 )
 
 target_link_libraries(LastCarriage

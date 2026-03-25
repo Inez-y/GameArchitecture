@@ -148,7 +148,7 @@ bool Map::load(const char* path) {
     return true;
 }
 
-void Map::render(SDL_Renderer* renderer, SDL_Texture* tilesetTexture) {
+void Map::render(SDL_Renderer* renderer, SDL_Texture* tilesetTexture, const SDL_FRect& camera) {
     if (!renderer || !tilesetTexture) {
         return;
     }
@@ -182,8 +182,8 @@ void Map::render(SDL_Renderer* renderer, SDL_Texture* tilesetTexture) {
             srcRect.h = static_cast<float>(tileHeight);
 
             SDL_FRect dstRect;
-            dstRect.x = static_cast<float>(col * tileWidth);
-            dstRect.y = static_cast<float>(row * tileHeight);
+            dstRect.x = static_cast<float>(col * tileWidth) - camera.x;
+            dstRect.y = static_cast<float>(row * tileHeight) - camera.y;
             dstRect.w = static_cast<float>(tileWidth);
             dstRect.h = static_cast<float>(tileHeight);
 

@@ -14,7 +14,7 @@ public:
     Map();
 
     bool load(const char* path);
-    void render(SDL_Renderer* renderer, SDL_Texture* tilesetTexture);
+    void render(SDL_Renderer* renderer, SDL_Texture* tilesetTexture, const SDL_FRect& camera);
 
     const std::vector<SpawnPoint>& getItemSpawnPoints() const;
     const std::vector<SDL_FRect>& getColliders() const;

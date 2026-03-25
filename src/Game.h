@@ -3,6 +3,8 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include "Map.h"
+#include "Player.h"
+#include "Camera.h"
 
 class Game {
 public:
@@ -24,4 +26,9 @@ private:
     bool isRunning;
 
     Map map;
+    Player player;
+    Camera camera;
+
+    // Previous tick
+    Uint64 lastCounter;
 };

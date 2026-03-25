@@ -3,7 +3,8 @@
 int main(int argc, char* argv[]) {
     Game game;
 
-    if (!game.init("Last Carriage", 960, 640)) {
+    // placeholder map is 960x940 -> Currently the game is smaller than the map
+    if (!game.init("Last Carriage", 800, 600)) {
         return 1;
     }
 
