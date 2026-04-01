@@ -22,7 +22,11 @@ Enemy::Enemy()
       damageAppliedThisAttack(false),
       hurtTimer(0.0f),
       hurtDuration(0.35f),
-      health(3) {
+      health(3),
+currentBossAttack(BossAttackType::None),
+bossAttackTimer(0.0f),
+bossAttackCooldown(1.5f),
+bossAttackPhase(0){
     dstRect = {0.0f, 0.0f, 32.0f, 32.0f};
 }
 
@@ -35,6 +39,11 @@ bool Enemy::init(SDL_Renderer* renderer, const char* texturePath,
     if (!texture) {
         std::cout << "Failed to load texture: " << SDL_GetError() << std::endl;
         return false;
+    }
+    type = enemyType;
+    if (type == EnemyType::Boss) {
+        health = 20;
+        speed = 140.0f;
     }
 
     x = startX;
@@ -52,45 +61,21 @@ bool Enemy::init(SDL_Renderer* renderer, const char* texturePath,
 }
 
 void Enemy::update(float deltaTime, float playerX, float playerY) {
-    // State
-    switch (state) {
-        case EnemyState::Idle:
-            updateIdle(deltaTime, playerX, playerY);
-            break;
-        case EnemyState::Patrol:
-            updatePatrol(deltaTime, playerX, playerY);
-            break;
-        case EnemyState::Chase:
-            updateChase(deltaTime, playerX, playerY);
-            break;
-        case EnemyState::Attack:
-            updateAttack(deltaTime, playerX, playerY);
-            break;
-        case EnemyState::Hurt:
-            updateHurt(deltaTime, playerX, playerY);
-            break;
-        case EnemyState::Dead:
-            updateDead(deltaTime, playerX, playerY);
-            break;
-    }
-
-    // Type
-    switch (type) {
-        case EnemyType::Patrol:
-            // Update later
-            // updatePatrolType(deltaTime, playerX, playerY);
-            break;
-        case EnemyType::Shooter:
-            // Update later
-            updateShooterType(deltaTime, playerX, playerY);
-            break;
-        case EnemyType::Flying:
-            // Update later
-            updateFlyingType(deltaTime, playerX, playerY);
-            break;
-        case EnemyType::Boss:
-            // updateBossType(deltaTime, playerX, playerY);
-            break;
+    if (type == EnemyType::Boss) {
+        updateBoss(deltaTime, playerX, playerY);
+    } else if (type == EnemyType::Shooter) {
+        updateShooterType(deltaTime, playerX, playerY);
+    } else if (type == EnemyType::Flying) {
+        updateFlyingType(deltaTime, playerX, playerY);
+    } else {
+        switch (state) {
+            case EnemyState::Idle:   updateIdle(deltaTime, playerX, playerY); break;
+            case EnemyState::Patrol: updatePatrol(deltaTime, playerX, playerY); break;
+            case EnemyState::Chase:  updateChase(deltaTime, playerX, playerY); break;
+            case EnemyState::Attack: updateAttack(deltaTime, playerX, playerY); break;
+            case EnemyState::Hurt:   updateHurt(deltaTime, playerX, playerY); break;
+            case EnemyState::Dead:   updateDead(deltaTime, playerX, playerY); break;
+        }
     }
 
     dstRect.x = x;
@@ -294,6 +279,136 @@ void Enemy::updateFlyingType(float deltaTime, float playerX, float playerY) {
     else if (dy > 10.0f) y += speed * deltaTime * 0.5f;
 }
 
+void Enemy::updateBoss(float deltaTime, float playerX, float playerY) {
+    switch (state) {
+        case EnemyState::Idle:
+            updateBossIdle(deltaTime, playerX, playerY);
+            break;
+        case EnemyState::Attack:
+            updateBossAttack(deltaTime, playerX, playerY);
+            break;
+        case EnemyState::Hurt:
+            updateHurt(deltaTime, playerX, playerY);
+            break;
+        case EnemyState::Dead:
+            updateDead(deltaTime, playerX, playerY);
+            break;
+        default:
+            changeState(EnemyState::Idle);
+            break;
+    }
+}
+
+void Enemy::updateBossIdle(float deltaTime, float playerX, float playerY) {
+    bossAttackTimer += deltaTime;
+
+    if (bossAttackTimer >= bossAttackCooldown) {
+        bossAttackTimer = 0.0f;
+        bossAttackPhase = 0;
+
+        float dist = distanceToPlayer(playerX, playerY);
+
+        if (dist > 220.0f) {
+            currentBossAttack = BossAttackType::DashAttack;
+        } else {
+            currentBossAttack = BossAttackType::BurstShot;
+        }
+
+        changeState(EnemyState::Attack);
+    }
+}
+
+void Enemy::updateBossAttack(float deltaTime, float playerX, float playerY) {
+    switch (currentBossAttack) {
+        case BossAttackType::BurstShot:
+            updateBossBurstShot(deltaTime, playerX, playerY);
+            break;
+        case BossAttackType::DashAttack:
+            updateBossDashAttack(deltaTime, playerX, playerY);
+            break;
+        default:
+            changeState(EnemyState::Idle);
+            break;
+    }
+}
+
+void Enemy::updateBossBurstShot(float deltaTime, float playerX, float playerY) {
+    bossAttackTimer += deltaTime;
+
+    if (playerX < x) direction = -1;
+    else direction = 1;
+
+    if (bossAttackPhase == 0) {
+        // windup
+        if (bossAttackTimer >= 0.5f) {
+            bossAttackTimer = 0.0f;
+            bossAttackPhase = 1;
+        }
+    }
+    else if (bossAttackPhase == 1) {
+        // fire shot 1
+        std::cout << "Boss fires shot 1\n";
+        // later: spawn projectile here
+        bossAttackTimer = 0.0f;
+        bossAttackPhase = 2;
+    }
+    else if (bossAttackPhase == 2) {
+        if (bossAttackTimer >= 0.2f) {
+            std::cout << "Boss fires shot 2\n";
+            // spawn projectile
+            bossAttackTimer = 0.0f;
+            bossAttackPhase = 3;
+        }
+    }
+    else if (bossAttackPhase == 3) {
+        if (bossAttackTimer >= 0.2f) {
+            std::cout << "Boss fires shot 3\n";
+            // spawn projectile
+            bossAttackTimer = 0.0f;
+            bossAttackPhase = 4;
+        }
+    }
+    else if (bossAttackPhase == 4) {
+        if (bossAttackTimer >= 0.4f) {
+            bossAttackTimer = 0.0f;
+            currentBossAttack = BossAttackType::None;
+            changeState(EnemyState::Idle);
+        }
+    }
+}
+
+void Enemy::updateBossDashAttack(float deltaTime, float playerX, float playerY) {
+    bossAttackTimer += deltaTime;
+
+    if (playerX < x) direction = -1;
+    else direction = 1;
+
+    if (bossAttackPhase == 0) {
+        // windup
+        if (bossAttackTimer >= 0.4f) {
+            bossAttackTimer = 0.0f;
+            bossAttackPhase = 1;
+        }
+    }
+    else if (bossAttackPhase == 1) {
+        // dash
+        x += direction * speed * 3.0f * deltaTime;
+
+        if (bossAttackTimer >= 0.5f) {
+            bossAttackTimer = 0.0f;
+            bossAttackPhase = 2;
+        }
+    }
+    else if (bossAttackPhase == 2) {
+        // recovery
+        if (bossAttackTimer >= 0.5f) {
+            bossAttackTimer = 0.0f;
+            currentBossAttack = BossAttackType::None;
+            changeState(EnemyState::Idle);
+        }
+    }
+}
+
 EnemyType stringToEnemyType(const std::string& type) {
     if (type == "Patrol") return EnemyType::Patrol;
     if (type == "Shooter") return EnemyType::Shooter;
@@ -319,8 +434,8 @@ void Enemy::render(SDL_Renderer *renderer, const SDL_FRect& camera) {
     }
 
     SDL_FRect screenRect = dstRect;
-    screenRect.x = x;
-    screenRect.y = y;
+    screenRect.x = x - camera.x;
+    screenRect.y = y - camera.y;
 
     SDL_RenderTexture(renderer, texture, nullptr, &screenRect);
 }

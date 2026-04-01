@@ -9,6 +9,7 @@
 #include "Enemy.h"
 #include "Bullet.h"
 #include "Item.h"
+#include "DoorSpawn.h"
 
 class Game {
 public:
@@ -28,6 +29,7 @@ private:
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* tilesetTexture;
+    SDL_Texture* doorTexture;
     bool isRunning;
 
     Map map;
@@ -42,7 +44,6 @@ private:
 
     float doorTimer;
     float doorCooldown;
-    SDL_Texture* doorTexture;
 
     // Previous tick
     Uint64 lastCounter;

@@ -20,6 +20,13 @@ enum class EnemyType {
     Boss
 };
 
+enum class BossAttackType {
+    None,
+    BurstShot,
+    DashAttack,
+    RainAttack
+};
+
 // Called in Game.cpp
 EnemyType stringToEnemyType(const std::string& type);
 const char* enemyTexturePath(EnemyType type);
@@ -58,6 +65,13 @@ private:
     void updateFlyingType(float deltaTime, float playerX, float playerY);
     void updateBossType(float deltaTime, float playerX, float playerY);
 
+    // Boss
+    void updateBoss(float deltaTime, float playerX, float playerY);
+    void updateBossIdle(float deltaTime, float playerX, float playerY);
+    void updateBossAttack(float deltaTime, float playerX, float playerY);
+    void updateBossBurstShot(float deltaTime, float playerX, float playerY);
+    void updateBossDashAttack(float deltaTime, float playerX, float playerY);
+
     float distanceToPlayer(float playerX, float playerY) const;
     void changeState(EnemyState newState);
 
@@ -92,6 +106,12 @@ private:
     float hurtDuration;
 
     int health;
+
+    // Boss
+    BossAttackType currentBossAttack;
+    float bossAttackTimer;
+    float bossAttackCooldown;
+    int bossAttackPhase;
 };
 
 #endif //LASTCARRIAGE_ENEMY_H

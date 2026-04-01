@@ -48,12 +48,16 @@ bool Game::init(const char* title, int width, int height) {
     }
 
     // Load TMX map
-    if (!map.load("../assets/map1_boss.tmx")) {
+    if (!map.load("../assets/map1.tmx")) {
         std::cout << "Failed to load TMX map.\n";
         SDL_DestroyTexture(tilesetTexture);
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
         SDL_Quit();
+        return false;
+    }
+
+    if (!loadStage("../assets/map1.tmx")) {
         return false;
     }
 
@@ -79,15 +83,29 @@ bool Game::init(const char* title, int width, int height) {
         return false;
     }
 
-    if (!loadStage("../assets/map1_boss.tmx")) {
-        return false;
-    }
-
     // Load a camera
     camera.x = 0.0;
     camera.y = 0.0;
     camera.w = static_cast<float>(width);
     camera.h = static_cast<float>(height);
+
+    // Load door
+    doorTexture = IMG_LoadTexture(renderer, "../assets/door.png");
+    std::cout << "Door count: " << map.getDoors().size() << std::endl;
+
+    for (const DoorSpawn& door : map.getDoors()) {
+        std::cout << "Door: x=" << door.x
+                  << " y=" << door.y
+                  << " w=" << door.w
+                  << " h=" << door.h
+                  << " target=" << door.targetMap
+                  << std::endl;
+    }
+
+    if (!doorTexture) {
+        std::cout << "Failed to load door texture: \n" << SDL_GetError() << std::endl;
+        return false;
+    }
 
     // Load enemies
     const std::vector<EnemySpawn>& enemySpawns = map.getEnemySpawns();
@@ -124,12 +142,6 @@ bool Game::init(const char* title, int width, int height) {
         }
     }
 
-    // Load door
-    doorTexture = IMG_LoadTexture(renderer, "../assets/door.png");
-    if (!doorTexture) {
-        std::cout << "Failed to load door texture: \n" << SDL_GetError() << std::endl;
-        return false;
-    }
 
     // Previous tick
     lastCounter = SDL_GetTicks();
@@ -302,6 +314,7 @@ void Game::update() {
         doorTimer -= deltaTime;
     }
 
+    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
     for (const DoorSpawn& door : map.getDoors()) {
         SDL_FRect doorRect;
         doorRect.x = door.x;
@@ -313,6 +326,10 @@ void Game::update() {
             playerBounds.x + playerBounds.w > doorRect.x &&
             playerBounds.y < doorRect.y + doorRect.h &&
                 playerBounds.y + playerBounds.h > doorRect.y;
+
+        if (overlaps) {
+            std::cout << "Player stepped on door! Target map: " << door.targetMap << std::endl;
+        }
 
         if (overlaps && !door.targetMap.empty()) {
             loadStage(door.targetMap.c_str());
@@ -336,6 +353,17 @@ void Game::render() {
 
     map.render(renderer, tilesetTexture, camRect);
     player.render(renderer, camRect);
+
+    // Door
+    for (const DoorSpawn& door : map.getDoors()) {
+        SDL_FRect dstRect;
+        dstRect.x = door.x - camera.x;
+        dstRect.y = door.y - camera.y;
+        dstRect.w = door.w;
+        dstRect.h = door.h;
+
+        SDL_RenderTexture(renderer, doorTexture, nullptr, &dstRect);
+    }
 
     // Enemies
     for (Enemy& enemy : enemies) {
@@ -367,17 +395,6 @@ void Game::render() {
     //     pointRect.h = 8.0f;
     //     SDL_RenderFillRect(renderer, &pointRect);
     // }
-
-    // Door
-    for (const DoorSpawn& door : map.getDoors()) {
-        SDL_FRect dstRect;
-        dstRect.x = door.x - camera.x;
-        dstRect.y = door.y - camera.y;
-        dstRect.w = door.w;
-        dstRect.h = door.h;
-
-        SDL_RenderTexture(renderer, doorTexture, nullptr, &dstRect);
-    }
 
     SDL_RenderPresent(renderer);
 }
