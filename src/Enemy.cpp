@@ -314,6 +314,10 @@ const char* enemyTexturePath(EnemyType type) {
 void Enemy::render(SDL_Renderer *renderer, const SDL_FRect& camera) {
     if (!texture) { return; }
 
+    if (state == EnemyState::Dead) {
+        return;
+    }
+
     SDL_FRect screenRect = dstRect;
     screenRect.x = x;
     screenRect.y = y;

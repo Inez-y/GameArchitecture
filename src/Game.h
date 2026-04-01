@@ -40,6 +40,10 @@ private:
     std::vector<Item> items;
     int coinCount;
 
+    float doorTimer;
+    float doorCooldown;
+    SDL_Texture* doorTexture;
+
     // Previous tick
     Uint64 lastCounter;
 };

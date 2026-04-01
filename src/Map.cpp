@@ -42,6 +42,7 @@ bool Map::load(const char* path) {
     itemSpawns.clear();
     enemySpawns.clear();
     colliders.clear();
+    doors.clear();
 
     playerSpawnSet = false;
     playerSpawn = {0.0f, 0.0f};
@@ -187,6 +188,23 @@ bool Map::load(const char* path) {
                     objectNode = objectNode->NextSiblingElement("object");
                 }
             }
+            else if (name == "Door Layer") {
+                XMLElement* objectNode = objectGroupNode->FirstChildElement("object");
+                while (objectNode) {
+                    DoorSpawn door;
+                    door.x = objectNode->FloatAttribute("x");
+                    door.y = objectNode->FloatAttribute("y");
+                    door.w = objectNode->FloatAttribute("width");
+                    door.h = objectNode->FloatAttribute("height");
+
+                    const char* objectName = objectNode->Attribute("name");
+                    door.targetMap = objectName ? objectName : "";
+
+                    doors.push_back(door);
+
+                    objectNode = objectNode->NextSiblingElement("object");
+                }
+            }
         }
 
         objectGroupNode = objectGroupNode->NextSiblingElement("objectgroup");
@@ -273,4 +291,8 @@ bool Map::hasPlayerSpawn() const {
 
 const std::vector<EnemySpawn>& Map::getEnemySpawns() const {
     return enemySpawns;
+}
+
+const std::vector<DoorSpawn>& Map::getDoors() const {
+    return doors;
 }

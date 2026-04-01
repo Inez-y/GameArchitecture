@@ -24,6 +24,8 @@ public:
 
     // For attack
     int getFacingDirection() const;
+
+    void setPosition(float newX, float newY);
 private:
     SDL_Texture* texture;
     SDL_FRect dstRect;

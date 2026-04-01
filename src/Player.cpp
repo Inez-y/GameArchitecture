@@ -109,3 +109,10 @@ float Player::getHeight() const {
 int Player::getFacingDirection() const {
     return facingDirection;
 }
+
+void Player::setPosition(float newX, float newY) {
+    x = newX;
+    y = newY;
+    dstRect.x = x;
+    dstRect.y = y;
+}

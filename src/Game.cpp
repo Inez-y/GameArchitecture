@@ -8,6 +8,8 @@ Game::Game()
       coinCount(0),
 shootCooldown(0.2f),
 shootTimer(0.0f),
+doorTimer(0.0f),
+doorCooldown(0.5f),
       isRunning(false) {
 }
 
@@ -55,6 +57,7 @@ bool Game::init(const char* title, int width, int height) {
         return false;
     }
 
+
     std::cout << "Map loaded successfully.\n";
     std::cout << "Map size: " << map.getWidth() << " x " << map.getHeight() << std::endl;
     std::cout << "Tile size: " << map.getTileWidth() << " x " << map.getTileHeight() << std::endl;
@@ -73,6 +76,10 @@ bool Game::init(const char* title, int width, int height) {
 
     if (!player.init(renderer, "../assets/player.png", playerStartX, playerStartY)) {
         std::cout << "Failed to initialize player.\n";
+        return false;
+    }
+
+    if (!loadStage("../assets/map1_boss.tmx")) {
         return false;
     }
 
@@ -115,6 +122,13 @@ bool Game::init(const char* title, int width, int height) {
             std::cout << "Failed to initialize one item.\n";
             items.pop_back();
         }
+    }
+
+    // Load door
+    doorTexture = IMG_LoadTexture(renderer, "../assets/door.png");
+    if (!doorTexture) {
+        std::cout << "Failed to load door texture: \n" << SDL_GetError() << std::endl;
+        return false;
     }
 
     // Previous tick
@@ -215,6 +229,7 @@ void Game::update() {
         }
     }
 
+    // Bullets
     for (Bullet& bullet : bullets) {
         if (!bullet.isActive()) {
             continue;
@@ -276,6 +291,42 @@ void Game::update() {
         }
     }
 
+    // Door
+    playerBounds.x = player.getX();
+    playerBounds.y = player.getY();
+    playerBounds.w = player.getWidth();
+    playerBounds.h = player.getHeight();
+
+    // Allow door transition when cooldown is done
+    if (doorTimer > 0.0f) {
+        doorTimer -= deltaTime;
+    }
+
+    for (const DoorSpawn& door : map.getDoors()) {
+        SDL_FRect doorRect;
+        doorRect.x = door.x;
+        doorRect.y = door.y;
+        doorRect.w = door.w;
+        doorRect.h = door.h;
+
+        bool overlaps = playerBounds.x < doorRect.x + doorRect.w &&
+            playerBounds.x + playerBounds.w > doorRect.x &&
+            playerBounds.y < doorRect.y + doorRect.h &&
+                playerBounds.y + playerBounds.h > doorRect.y;
+
+        if (overlaps && !door.targetMap.empty()) {
+            loadStage(door.targetMap.c_str());
+            break;
+        }
+
+        if (overlaps && doorTimer <= 0.0f && !door.targetMap.empty()) {
+            if (loadStage(door.targetMap.c_str())) {
+                doorTimer = doorCooldown;
+            }
+            break;
+        }
+    }
+
 }
 
 void Game::render() {
@@ -317,30 +368,45 @@ void Game::render() {
     //     SDL_RenderFillRect(renderer, &pointRect);
     // }
 
+    // Door
+    for (const DoorSpawn& door : map.getDoors()) {
+        SDL_FRect dstRect;
+        dstRect.x = door.x - camera.x;
+        dstRect.y = door.y - camera.y;
+        dstRect.w = door.w;
+        dstRect.h = door.h;
+
+        SDL_RenderTexture(renderer, doorTexture, nullptr, &dstRect);
+    }
+
     SDL_RenderPresent(renderer);
 }
 
 bool Game::loadStage(const char* mapPath) {
+    for (Enemy& enemy : enemies) {
+        enemy.clean();
+    }
     enemies.clear();
+
+    for (Item& item : items) {
+        item.clean();
+    }
     items.clear();
 
+    bullets.clear();
+
     if (!map.load(mapPath)) {
-        std::cout << "Failed to load map!: \n" << mapPath << std::endl;
+        std::cout << "Failed to load map: " << mapPath << std::endl;
         return false;
     }
 
-    float playerStartX = 100.0f;
-    float playerStartY = 100.0f;
-
     if (map.hasPlayerSpawn()) {
         SpawnPoint spawn = map.getPlayerSpawn();
-        playerStartX = spawn.x;
-        playerStartY = spawn.y;
+        player.setPosition(spawn.x, spawn.y);
+    } else {
+        player.setPosition(100.0f, 100.0f);
     }
 
-    // Player rest/reposition goes here
-
-    // Enemies
     const std::vector<EnemySpawn>& enemySpawns = map.getEnemySpawns();
     for (const EnemySpawn& spawn : enemySpawns) {
         EnemyType type = stringToEnemyType(spawn.type);
@@ -351,29 +417,30 @@ bool Game::loadStage(const char* mapPath) {
         float patrolRight = spawn.x + 100.0f;
 
         if (!enemies.back().init(renderer,
-                             enemyTexturePath(type),
-                             spawn.x, spawn.y,
-                             patrolLeft, patrolRight,
-                             type)) {
+                                 enemyTexturePath(type),
+                                 spawn.x, spawn.y,
+                                 patrolLeft, patrolRight,
+                                 type)) {
             std::cout << "Failed to initialize one enemy.\n";
             enemies.pop_back();
-                             }
+                                 }
     }
 
-    // Items
     const std::vector<ItemSpawn>& itemSpawns = map.getItemSpawns();
-    for (const ItemSpawn& spawn: itemSpawns) {
+    for (const ItemSpawn& spawn : itemSpawns) {
         ItemType type = stringToItemType(spawn.type);
 
         items.emplace_back();
 
         if (!items.back().init(renderer, itemTexturePath(type), spawn.x, spawn.y, type)) {
+            std::cout << "Failed to initialize one item.\n";
             items.pop_back();
         }
     }
 
     return true;
 }
+
 void Game::clean() {
     if (tilesetTexture) {
         SDL_DestroyTexture(tilesetTexture);
@@ -395,6 +462,11 @@ void Game::clean() {
         item.clean();
     }
     items.clear();
+
+    if (doorTexture) {
+        SDL_DestroyTexture(doorTexture);
+        doorTexture = nullptr;
+    }
 
     // Clear all drawings before renderer clearing
     if (renderer) {

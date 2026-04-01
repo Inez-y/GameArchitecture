@@ -37,6 +37,8 @@ add_executable(LastCarriage src
         src/Item.h
         src/Bullet.cpp
         src/Bullet.h
+        src/DoorSpawn.cpp
+        src/DoorSpawn.h
 )
 
 target_link_libraries(LastCarriage

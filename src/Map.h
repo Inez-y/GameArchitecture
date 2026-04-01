@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "DoorSpawn.h"
+
 // Items
 struct SpawnPoint {
     float x;
@@ -22,6 +24,13 @@ struct EnemySpawn {
     std::string type;
 };
 
+struct DoorSpaw {
+    float x;
+    float y;
+    float w;
+    float h;
+    std::string targetMap;
+};
 
 class Map {
 public:
@@ -42,6 +51,9 @@ public:
     int getTileWidth() const;
     int getTileHeight() const;
 
+    // To the next map
+    const std::vector<DoorSpawn>& getDoors() const;
+
 
 private:
     std::vector<std::vector<int>> tiles;
@@ -49,6 +61,7 @@ private:
     // std::vector<SpawnPoint> enemySpawnPoints;
     std::vector<EnemySpawn> enemySpawns;
     std::vector<SDL_FRect> colliders;
+    std::vector<DoorSpawn> doors;
 
     SpawnPoint playerSpawn;
     bool playerSpawnSet;
