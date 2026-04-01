@@ -46,7 +46,7 @@ bool Game::init(const char* title, int width, int height) {
     }
 
     // Load TMX map
-    if (!map.load("../assets/map.tmx")) {
+    if (!map.load("../assets/map1_boss.tmx")) {
         std::cout << "Failed to load TMX map.\n";
         SDL_DestroyTexture(tilesetTexture);
         SDL_DestroyRenderer(renderer);
@@ -83,15 +83,21 @@ bool Game::init(const char* title, int width, int height) {
     camera.h = static_cast<float>(height);
 
     // Load enemies
-    const std::vector<SpawnPoint>& enemySpawns = map.getEnemySpawnPoints();
+    const std::vector<EnemySpawn>& enemySpawns = map.getEnemySpawns();
 
-    for (const SpawnPoint& spawn : enemySpawns) {
+    for (const EnemySpawn& spawn : enemySpawns) {
+        EnemyType type = stringToEnemyType(spawn.type);
+
         enemies.emplace_back();
 
         float patrolLeft = spawn.x - 100.0f;
         float patrolRight = spawn.x + 100.0f;
 
-        if (!enemies.back().init(renderer, "../assets/enemy.png", spawn.x, spawn.y, patrolLeft, patrolRight)) {
+        if (!enemies.back().init(renderer,
+                             enemyTexturePath(type),
+                             spawn.x, spawn.y,
+                             patrolLeft, patrolRight,
+                             type)) {
             std::cout << "Failed to initialize one enemy.\n";
             enemies.pop_back();
         }
@@ -314,6 +320,60 @@ void Game::render() {
     SDL_RenderPresent(renderer);
 }
 
+bool Game::loadStage(const char* mapPath) {
+    enemies.clear();
+    items.clear();
+
+    if (!map.load(mapPath)) {
+        std::cout << "Failed to load map!: \n" << mapPath << std::endl;
+        return false;
+    }
+
+    float playerStartX = 100.0f;
+    float playerStartY = 100.0f;
+
+    if (map.hasPlayerSpawn()) {
+        SpawnPoint spawn = map.getPlayerSpawn();
+        playerStartX = spawn.x;
+        playerStartY = spawn.y;
+    }
+
+    // Player rest/reposition goes here
+
+    // Enemies
+    const std::vector<EnemySpawn>& enemySpawns = map.getEnemySpawns();
+    for (const EnemySpawn& spawn : enemySpawns) {
+        EnemyType type = stringToEnemyType(spawn.type);
+
+        enemies.emplace_back();
+
+        float patrolLeft = spawn.x - 100.0f;
+        float patrolRight = spawn.x + 100.0f;
+
+        if (!enemies.back().init(renderer,
+                             enemyTexturePath(type),
+                             spawn.x, spawn.y,
+                             patrolLeft, patrolRight,
+                             type)) {
+            std::cout << "Failed to initialize one enemy.\n";
+            enemies.pop_back();
+                             }
+    }
+
+    // Items
+    const std::vector<ItemSpawn>& itemSpawns = map.getItemSpawns();
+    for (const ItemSpawn& spawn: itemSpawns) {
+        ItemType type = stringToItemType(spawn.type);
+
+        items.emplace_back();
+
+        if (!items.back().init(renderer, itemTexturePath(type), spawn.x, spawn.y, type)) {
+            items.pop_back();
+        }
+    }
+
+    return true;
+}
 void Game::clean() {
     if (tilesetTexture) {
         SDL_DestroyTexture(tilesetTexture);

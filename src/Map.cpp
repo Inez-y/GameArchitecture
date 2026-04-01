@@ -40,7 +40,7 @@ bool Map::load(const char* path) {
 
     tiles.clear();
     itemSpawns.clear();
-    enemySpawnPoints.clear();
+    enemySpawns.clear();
     colliders.clear();
 
     playerSpawnSet = false;
@@ -144,7 +144,14 @@ bool Map::load(const char* path) {
                     float x = objectNode->FloatAttribute("x");
                     float y = objectNode->FloatAttribute("y");
 
-                    enemySpawnPoints.push_back({x, y});
+                    const char* objectName = objectNode->Attribute("name");
+                    std::string enemyType = "Patrol";
+
+                    if (objectName) {
+                        enemyType = objectName;
+                    }
+
+                    enemySpawns.push_back({x, y, enemyType});
 
                     objectNode = objectNode->NextSiblingElement("object");
                 }
@@ -264,6 +271,6 @@ bool Map::hasPlayerSpawn() const {
     return playerSpawnSet;
 }
 
-const std::vector<SpawnPoint>& Map::getEnemySpawnPoints() const {
-    return enemySpawnPoints;
+const std::vector<EnemySpawn>& Map::getEnemySpawns() const {
+    return enemySpawns;
 }

@@ -1,6 +1,7 @@
 #ifndef LASTCARRIAGE_ENEMY_H
 #define LASTCARRIAGE_ENEMY_H
 #pragma once
+#include <string>
 #include <SDL3/SDL.h>
 
 enum class EnemyState {
@@ -12,11 +13,25 @@ enum class EnemyState {
     Dead
 };
 
+enum class EnemyType {
+    Patrol,
+    Shooter,
+    Flying,
+    Boss
+};
+
+// Called in Game.cpp
+EnemyType stringToEnemyType(const std::string& type);
+const char* enemyTexturePath(EnemyType type);
+
 class Enemy {
 public:
     Enemy();
 
-    bool init(SDL_Renderer* renderer, const char* texturePath, float startX, float startY, float patrolLeft, float patrolRight);
+    bool init(SDL_Renderer* renderer, const char* texturePath,
+              float startX, float startY,
+              float patrolLeft, float patrolRight,
+              EnemyType enemyType);
     void update(float deltaTime, float playerX, float playerY);
     void render(SDL_Renderer* renderer, const SDL_FRect& camera);
     void clean();
@@ -27,6 +42,7 @@ public:
     EnemyState getState() const;
     bool isDead() const;
 
+
 private:
     // Enemy states
     void updateIdle(float deltaTime, float playerX, float playerY);
@@ -35,6 +51,12 @@ private:
     void updateAttack(float deltaTime, float playerX, float playerY);
     void updateHurt(float deltaTime, float playerX, float playerY); // stun
     void updateDead(float deltaTime, float playerX, float playerY);
+
+    // Enemy Types
+    void updatePatrolType(float deltaTime, float playerX, float playerY);
+    void updateShooterType(float deltaTime, float playerX, float playerY);
+    void updateFlyingType(float deltaTime, float playerX, float playerY);
+    void updateBossType(float deltaTime, float playerX, float playerY);
 
     float distanceToPlayer(float playerX, float playerY) const;
     void changeState(EnemyState newState);
@@ -53,6 +75,7 @@ private:
 
     // Enemy state logic
     EnemyState state;
+    EnemyType type;
 
     float idleTimer;
     float idleDuration;

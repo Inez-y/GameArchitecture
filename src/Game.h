@@ -23,6 +23,7 @@ private:
     void handleEvents();
     void update();
     void render();
+    bool loadStage(const char* mathPath);
 
     SDL_Window* window;
     SDL_Renderer* renderer;

@@ -26,7 +26,11 @@ Enemy::Enemy()
     dstRect = {0.0f, 0.0f, 32.0f, 32.0f};
 }
 
-bool Enemy::init(SDL_Renderer *renderer, const char *texturePath, float startX, float startY, float leftBound, float rightBound) {
+bool Enemy::init(SDL_Renderer* renderer, const char* texturePath,
+              float startX, float startY,
+              float leftBound, float rightBound,
+              EnemyType enemyType) {
+
     texture = IMG_LoadTexture(renderer, texturePath);
     if (!texture) {
         std::cout << "Failed to load texture: " << SDL_GetError() << std::endl;
@@ -42,15 +46,13 @@ bool Enemy::init(SDL_Renderer *renderer, const char *texturePath, float startX, 
     float texH = 0.0f;
     SDL_GetTextureSize(texture, &texW, &texH);
 
-    dstRect.x = x;
-    dstRect.y = y;
-    dstRect.w = texW;
-    dstRect.h = texH;
+    dstRect = {x, y, texW, texH};
 
     return true;
 }
 
 void Enemy::update(float deltaTime, float playerX, float playerY) {
+    // State
     switch (state) {
         case EnemyState::Idle:
             updateIdle(deltaTime, playerX, playerY);
@@ -69,6 +71,25 @@ void Enemy::update(float deltaTime, float playerX, float playerY) {
             break;
         case EnemyState::Dead:
             updateDead(deltaTime, playerX, playerY);
+            break;
+    }
+
+    // Type
+    switch (type) {
+        case EnemyType::Patrol:
+            // Update later
+            // updatePatrolType(deltaTime, playerX, playerY);
+            break;
+        case EnemyType::Shooter:
+            // Update later
+            updateShooterType(deltaTime, playerX, playerY);
+            break;
+        case EnemyType::Flying:
+            // Update later
+            updateFlyingType(deltaTime, playerX, playerY);
+            break;
+        case EnemyType::Boss:
+            // updateBossType(deltaTime, playerX, playerY);
             break;
     }
 
@@ -228,6 +249,65 @@ void Enemy::changeState(EnemyState newState) {
     }
     else if (state == EnemyState::Hurt) {
         hurtTimer = 0.0f;
+    }
+}
+
+// Update by types
+void Enemy::updateShooterType(float deltaTime, float playerX, float playerY) {
+    float dist = distanceToPlayer(playerX, playerY);
+
+    switch (state) {
+        case EnemyState::Idle:
+            if (dist < chaseRange) {
+                changeState(EnemyState::Attack);
+            }
+            break;
+
+        case EnemyState::Attack:
+            updateAttack(deltaTime, playerX, playerY);
+            break;
+
+        case EnemyState::Hurt:
+            updateHurt(deltaTime, playerX, playerY);
+            break;
+
+        case EnemyState::Dead:
+            updateDead(deltaTime, playerX, playerY);
+            break;
+
+        default:
+            changeState(EnemyState::Idle);
+            break;
+    }
+}
+
+void Enemy::updateFlyingType(float deltaTime, float playerX, float playerY) {
+    float dx = playerX - x;
+    float dy = playerY - y;
+
+    if (dx < 0.0f) direction = -1;
+    else if (dx > 0.0f) direction = 1;
+
+    x += direction * speed * deltaTime * 0.8f;
+
+    if (dy < -10.0f) y -= speed * deltaTime * 0.5f;
+    else if (dy > 10.0f) y += speed * deltaTime * 0.5f;
+}
+
+EnemyType stringToEnemyType(const std::string& type) {
+    if (type == "Patrol") return EnemyType::Patrol;
+    if (type == "Shooter") return EnemyType::Shooter;
+    if (type == "Flying") return EnemyType::Flying;
+    if (type == "Boss") return EnemyType::Boss;
+    return EnemyType::Patrol;
+}
+
+const char* enemyTexturePath(EnemyType type) {
+    switch (type) {
+        // case EnemyType::Patrol: return "assets/enemy_patrol.png";
+        // case EnemyType::Shooter: return "assets/enemy_shooter.png";
+        case EnemyType::Boss: return "../assets/boss1.png";
+        default: return "../assets/enemy.png";
     }
 }
 

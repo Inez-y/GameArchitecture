@@ -31,10 +31,10 @@
    </object>
  </objectgroup>
  <objectgroup name="Enemy Spawn Layer">
-   <object id="30" x="400" y="500">
+   <object id="30" x="400" y="500" name="Patrol">
      <point/>
    </object>
-   <object id="31" x="900" y="500">
+   <object id="31" x="900" y="500" name="Flying">
      <point/>
    </object>
  </objectgroup>
@@ -55,4 +55,7 @@
  <objectgroup id="2" name="Collision Layer">
   <object id="9" x="10.8108" y="370.27" width="862.162" height="89.1892"/>
  </objectgroup>
+  <objectgroup id="100" name="Door Layer">
+   <object id="9" x="10.8108" y="370.27" width="862.162" height="89.1892"/>
+  </objectgroup>
 </map>

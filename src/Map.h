@@ -16,6 +16,12 @@ struct ItemSpawn {
     std::string type;
 };
 
+struct EnemySpawn {
+    float x;
+    float y;
+    std::string type;
+};
+
 
 class Map {
 public:
@@ -25,7 +31,7 @@ public:
     void render(SDL_Renderer* renderer, SDL_Texture* tilesetTexture, const SDL_FRect& camera);
 
     const std::vector<ItemSpawn>& getItemSpawns() const;
-    const std::vector<SpawnPoint>& getEnemySpawnPoints() const;
+    const std::vector<EnemySpawn>& getEnemySpawns() const;
     const std::vector<SDL_FRect>& getColliders() const;
 
     SpawnPoint getPlayerSpawn() const;
@@ -40,7 +46,8 @@ public:
 private:
     std::vector<std::vector<int>> tiles;
     std::vector<ItemSpawn> itemSpawns;
-    std::vector<SpawnPoint> enemySpawnPoints;
+    // std::vector<SpawnPoint> enemySpawnPoints;
+    std::vector<EnemySpawn> enemySpawns;
     std::vector<SDL_FRect> colliders;
 
     SpawnPoint playerSpawn;
