@@ -11,7 +11,16 @@ Player::Player()
       moveY(0.0f),
       facingDirection(1),
       hp(10),
-      maxHP(10) {
+      maxHP(10),
+      velocityY(0.0f),
+      gravity(900.0f),
+      jumpStrength(450.0f),
+      grounded(false),
+      ammo(6),
+      maxAmmo(6),
+      reloading(false),
+      reloadTimer(0.0f),
+      reloadDuration(1.2f) {
     dstRect = {x, y, 32.0f, 32.0f};
 }
 
@@ -38,37 +47,83 @@ bool Player::init(SDL_Renderer* renderer, const char* texturePath, float startX,
 }
 
 void Player::handleInput(const bool* keyStates) {
-    float dx = 0.0f;
-    float dy = 0.0f;
+    moveX = 0.0f;
 
-    // WASD for test
-    if (keyStates[SDL_SCANCODE_W] || keyStates[SDL_SCANCODE_UP]) {
-        dy -= 1.0f;
-    }
-    if (keyStates[SDL_SCANCODE_S] || keyStates[SDL_SCANCODE_DOWN]) {
-        dy += 1.0f;
-    }
     if (keyStates[SDL_SCANCODE_A] || keyStates[SDL_SCANCODE_LEFT]) {
-        dx -= 1.0f;
-        facingDirection = -1; // left
+        moveX = -1.0f;
+        facingDirection = -1;
     }
     if (keyStates[SDL_SCANCODE_D] || keyStates[SDL_SCANCODE_RIGHT]) {
-        dx += 1.0f;
-        facingDirection = 1; // right
+        moveX = 1.0f;
+        facingDirection = 1;
     }
 
-    // Attack spacebar
-    // Jump Lshift
-    x += dx * speed / 60.0f;
-    y += dy * speed / 60.0f;
-
-    dstRect.x = x;
-    dstRect.y = y;
+    if ((keyStates[SDL_SCANCODE_W] || keyStates[SDL_SCANCODE_UP]) && grounded) {
+        velocityY = -jumpStrength;
+        grounded = false;
+    }
 }
 
 void Player::update(float deltaTime, const Map& map) {
+    // Horizontal movement
+    x += moveX * speed * deltaTime;
 
+    // Gravity
+    velocityY += gravity * deltaTime;
+    y += velocityY * deltaTime;
 
+    grounded = false;
+
+    // Very simple collision against map colliders
+    SDL_FRect playerRect = {x, y, dstRect.w, dstRect.h};
+
+    for (const SDL_FRect& collider : map.getColliders()) {
+        bool overlaps =
+            playerRect.x < collider.x + collider.w &&
+            playerRect.x + playerRect.w > collider.x &&
+            playerRect.y < collider.y + collider.h &&
+            playerRect.y + playerRect.h > collider.y;
+
+        if (overlaps) {
+            // Only handle landing from above for now
+            float previousBottom = (y - velocityY * deltaTime) + dstRect.h;
+            float colliderTop = collider.y;
+
+            if (previousBottom <= colliderTop + 5.0f && velocityY >= 0.0f) {
+                y = collider.y - dstRect.h;
+                velocityY = 0.0f;
+                grounded = true;
+                playerRect.y = y;
+            }
+        }
+    }
+
+    // Clamp inside map horizontally
+    float mapPixelWidth = static_cast<float>(map.getWidth() * map.getTileWidth());
+    float mapPixelHeight = static_cast<float>(map.getHeight() * map.getTileHeight());
+
+    if (x < 0.0f) x = 0.0f;
+    if (x > mapPixelWidth - dstRect.w) x = mapPixelWidth - dstRect.w;
+
+    // Prevent falling forever
+    if (y > mapPixelHeight - dstRect.h) {
+        y = mapPixelHeight - dstRect.h;
+        velocityY = 0.0f;
+        grounded = true;
+    }
+
+    // Reload timer
+    if (reloading) {
+        reloadTimer += deltaTime;
+        if (reloadTimer >= reloadDuration) {
+            ammo = maxAmmo;
+            reloading = false;
+            reloadTimer = 0.0f;
+        }
+    }
+
+    dstRect.x = x;
+    dstRect.y = y;
 }
 
 void Player::render(SDL_Renderer* renderer, const SDL_FRect& camera) {
@@ -134,5 +189,44 @@ void Player::heal(int amount) {
     hp += amount;
     if (hp > maxHP) {
         hp = maxHP;
+    }
+}
+
+void Player::startReload() {
+    if (reloading) {
+        return;
+    }
+
+    if (ammo == maxAmmo) {
+        return;
+    }
+
+    reloading = true;
+    reloadTimer = 0.0f;
+}
+
+bool Player::isReloading() const {
+    return reloading;
+}
+
+bool Player::isGrounded() const {
+    return grounded;
+}
+
+int Player::getAmmo() const {
+    return ammo;
+}
+
+int Player::getMaxAmmo() const {
+    return maxAmmo;
+}
+
+bool Player::canShoot() const {
+    return !reloading && ammo > 0;
+}
+
+void Player::consumeAmmo() {
+    if (ammo > 0) {
+        ammo--;
     }
 }

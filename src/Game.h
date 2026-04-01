@@ -27,6 +27,7 @@ private:
     void render();
     bool loadStage(const char* mathPath);
     bool updateHPText();
+    bool updateAmmoText();
 
     SDL_Window* window;
     SDL_Renderer* renderer;
@@ -47,10 +48,12 @@ private:
     float doorTimer;
     float doorCooldown;
 
-    // HP Text placeholder
+    // Text placeholder
     TTF_Font* uiFont;
     SDL_Texture* hpTextTexture;
     SDL_FRect hpTextRect;
+    SDL_Texture* ammoTextTexture;
+    SDL_FRect ammoTextRect;
 
     // Previous tick
     Uint64 lastCounter;

@@ -6,6 +6,8 @@ Game::Game()
     : window(nullptr),
       renderer(nullptr),
       tilesetTexture(nullptr),
+ammoTextTexture(nullptr),
+ammoTextRect(0.0f, 0.0f, 0.0f, 0.0f),
       coinCount(0),
 shootCooldown(0.2f),
 shootTimer(0.0f),
@@ -121,7 +123,13 @@ void Game::handleEvents() {
         }
 
         if (event.type == SDL_EVENT_KEY_DOWN) {
-            if (event.key.scancode == SDL_SCANCODE_SPACE && shootTimer <= 0.0f) {
+            if (event.key.scancode == SDL_SCANCODE_R) {
+                player.startReload();
+            }
+
+            if (event.key.scancode == SDL_SCANCODE_SPACE &&
+                shootTimer <= 0.0f &&
+                player.canShoot()) {
                 Bullet bullet;
 
                 float bulletX = player.getX() + player.getWidth() / 2.0f;
@@ -130,8 +138,9 @@ void Game::handleEvents() {
                 bullet.init(bulletX, bulletY, player.getFacingDirection());
                 bullets.push_back(bullet);
 
+                player.consumeAmmo();
                 shootTimer = shootCooldown;
-            }
+                }
         }
     }
 
@@ -159,7 +168,7 @@ void Game::update() {
 
     // Update enemies FIRST
     for (Enemy& enemy : enemies) {
-        enemy.update(deltaTime, player.getX(), player.getY());
+        enemy.update(deltaTime, player.getX(), player.getY(), map);
     }
 
     // Camera follow
@@ -344,6 +353,7 @@ void Game::render() {
 
     // Update UI text
     updateHPText();
+    updateAmmoText();
 
     // WORLD
 
@@ -403,6 +413,9 @@ void Game::render() {
     // UI
     if (hpTextTexture) {
         SDL_RenderTexture(renderer, hpTextTexture, nullptr, &hpTextRect);
+    }
+    if (ammoTextTexture) {
+        SDL_RenderTexture(renderer, ammoTextTexture, nullptr, &ammoTextRect);
     }
 
     SDL_RenderPresent(renderer);
@@ -476,6 +489,10 @@ void Game::clean() {
         SDL_DestroyTexture(tilesetTexture);
         tilesetTexture = nullptr;
     }
+    if (ammoTextTexture) {
+        SDL_DestroyTexture(ammoTextTexture);
+        ammoTextTexture = nullptr;
+    }
 
     player.clean();
 
@@ -523,4 +540,36 @@ void Game::clean() {
     }
 
     SDL_Quit();
+}
+
+bool Game::updateAmmoText() {
+    if (ammoTextTexture) {
+        SDL_DestroyTexture(ammoTextTexture);
+        ammoTextTexture = nullptr;
+    }
+
+    std::string ammoString = "Ammo: " + std::to_string(player.getAmmo()) +
+                             "/" + std::to_string(player.getMaxAmmo());
+
+    if (player.isReloading()) {
+        ammoString += " (Reloading)";
+    }
+
+    SDL_Color color = {255, 255, 255, 255};
+    SDL_Surface* textSurface = TTF_RenderText_Blended(uiFont, ammoString.c_str(), 0, color);
+    if (!textSurface) {
+        return false;
+    }
+
+    ammoTextTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    if (!ammoTextTexture) {
+        SDL_DestroySurface(textSurface);
+        return false;
+    }
+
+    ammoTextRect.w = static_cast<float>(textSurface->w);
+    ammoTextRect.h = static_cast<float>(textSurface->h);
+
+    SDL_DestroySurface(textSurface);
+    return true;
 }

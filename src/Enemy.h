@@ -4,6 +4,8 @@
 #include <string>
 #include <SDL3/SDL.h>
 
+#include "Map.h"
+
 enum class EnemyState {
     Idle,
     Patrol,
@@ -39,7 +41,7 @@ public:
               float startX, float startY,
               float patrolLeft, float patrolRight,
               EnemyType enemyType);
-    void update(float deltaTime, float playerX, float playerY);
+    void update(float deltaTime, float playerX, float playerY, const Map& map);
     void render(SDL_Renderer* renderer, const SDL_FRect& camera);
     void clean();
 
@@ -47,11 +49,12 @@ public:
 
     SDL_FRect getBounds() const;
     EnemyState getState() const;
+
     bool isDead() const;
-
     bool didAttackHit() const;
-
     void resetAttackHit();
+
+    void applyGravity(float deltaTime, const Map& map);
 
 
 private:
@@ -78,6 +81,8 @@ private:
 
     float distanceToPlayer(float playerX, float playerY) const;
     void changeState(EnemyState newState);
+
+    bool isGrounded() const;
 
 private:
     SDL_Texture* texture;
@@ -118,6 +123,12 @@ private:
 
     EnemyType type;
     bool attackHitThisFrame;
+
+    Map map;
+    bool grounded;
+    float velocityY;
+    float gravity;
+
 };
 
 #endif //LASTCARRIAGE_ENEMY_H

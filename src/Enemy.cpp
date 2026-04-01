@@ -7,6 +7,9 @@ Enemy::Enemy()
     : texture(nullptr),
       x(0.0f),
       y(0.0f),
+grounded(false),
+velocityY(0.0f),
+gravity(900.0f),
       speed(100.0f),
       patrolLeft(0.0f),
       patrolRight(0.0f),
@@ -74,28 +77,28 @@ bool Enemy::init(SDL_Renderer* renderer, const char* texturePath,
     return true;
 }
 
-void Enemy::update(float deltaTime, float playerX, float playerY) {
+void Enemy::update(float deltaTime, float playerX, float playerY, const Map& map) {
     attackHitThisFrame = false;
 
     switch (type) {
         case EnemyType::Patrol:
             switch (state) {
-                case EnemyState::Idle:
+            case EnemyState::Idle:
                     updateIdle(deltaTime, playerX, playerY);
                     break;
-                case EnemyState::Patrol:
+            case EnemyState::Patrol:
                     updatePatrol(deltaTime, playerX, playerY);
                     break;
-                case EnemyState::Chase:
+            case EnemyState::Chase:
                     updateChase(deltaTime, playerX, playerY);
                     break;
-                case EnemyState::Attack:
+            case EnemyState::Attack:
                     updateAttack(deltaTime, playerX, playerY);
                     break;
-                case EnemyState::Hurt:
+            case EnemyState::Hurt:
                     updateHurt(deltaTime, playerX, playerY);
                     break;
-                case EnemyState::Dead:
+            case EnemyState::Dead:
                     updateDead(deltaTime, playerX, playerY);
                     break;
             }
@@ -113,6 +116,8 @@ void Enemy::update(float deltaTime, float playerX, float playerY) {
             updateBoss(deltaTime, playerX, playerY);
             break;
     }
+
+    applyGravity(deltaTime, map);
 
     dstRect.x = x;
     dstRect.y = y;
@@ -513,4 +518,46 @@ float Enemy::distanceToPlayer(float playerX, float playerY) const {
     float dx = playerX - x;
     float dy = playerY - y;
     return std::sqrt(dx * dx + dy * dy);
+}
+
+void Enemy::applyGravity(float deltaTime, const Map& map) {
+    if (type == EnemyType::Flying) {
+        return;
+    }
+
+    velocityY += gravity * deltaTime;
+    y += velocityY * deltaTime;
+
+    grounded = false;
+
+    SDL_FRect enemyRect = {x, y, dstRect.w, dstRect.h};
+
+    for (const SDL_FRect& collider : map.getColliders()) {
+        bool overlaps =
+            enemyRect.x < collider.x + collider.w &&
+            enemyRect.x + enemyRect.w > collider.x &&
+            enemyRect.y < collider.y + collider.h &&
+            enemyRect.y + enemyRect.h > collider.y;
+
+        if (overlaps) {
+            float previousBottom = (y - velocityY * deltaTime) + dstRect.h;
+            float colliderTop = collider.y;
+
+            if (previousBottom <= colliderTop + 5.0f && velocityY >= 0.0f) {
+                y = collider.y - dstRect.h;
+                velocityY = 0.0f;
+                grounded = true;
+                enemyRect.y = y;
+            }
+        }
+    }
+
+    // Prevent enemies leaving the map
+    float mapPixelHeight = static_cast<float>(map.getHeight() * map.getTileHeight());
+
+    if (y > mapPixelHeight - dstRect.h) {
+        y = mapPixelHeight - dstRect.h;
+        velocityY = 0.0f;
+        grounded = true;
+    }
 }

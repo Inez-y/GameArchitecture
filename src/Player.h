@@ -30,6 +30,16 @@ public:
     int getHP() const;
     void takeDamage(int damage);
     void heal(int amount);
+
+    bool isGrounded() const;
+    bool isReloading() const;
+    void startReload();
+    int getAmmo() const;
+    int getMaxAmmo() const;
+
+    bool canShoot() const;
+    void consumeAmmo();
+
 private:
     SDL_Texture* texture;
     SDL_FRect dstRect;
@@ -47,6 +57,17 @@ private:
 
     int hp;
     int maxHP;
+
+    float velocityY;
+    float gravity;
+    float jumpStrength;
+    bool grounded;
+
+    int ammo;
+    int maxAmmo;
+    bool reloading;
+    float reloadTimer;
+    float reloadDuration;
 };
 
 #endif //LASTCARRIAGE_PLAYER_H
