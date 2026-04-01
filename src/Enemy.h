@@ -33,6 +33,7 @@ enum class BossAttackType {
 EnemyType stringToEnemyType(const std::string& type);
 const char* enemyTexturePath(EnemyType type);
 
+
 class Enemy {
 public:
     Enemy();
@@ -56,6 +57,9 @@ public:
 
     void applyGravity(float deltaTime, const Map& map);
 
+    bool didShootThisFrame() const;
+    void resetShotThisFrame();
+
 
 private:
     // Enemy states
@@ -72,10 +76,16 @@ private:
     void updateFlyingType(float deltaTime, float playerX, float playerY);
     void updateBossType(float deltaTime, float playerX, float playerY);
 
+    // Attack functions per type
+    void updatePatrolAttack(float deltaTime, float playerX, float playerY);
+    void updateShooterAttack(float deltaTime, float playerX, float playerY);
+    void updateFlyingAttack(float deltaTime, float playerX, float playerY);
+    void updateBossAttack(float deltaTime, float playerX, float playerY);
+    void updateShooterIdle(float deltaTime, float playerX, float playerY);
+
     // Boss
     void updateBoss(float deltaTime, float playerX, float playerY);
     void updateBossIdle(float deltaTime, float playerX, float playerY);
-    void updateBossAttack(float deltaTime, float playerX, float playerY);
     void updateBossBurstShot(float deltaTime, float playerX, float playerY);
     void updateBossDashAttack(float deltaTime, float playerX, float playerY);
 
@@ -105,6 +115,7 @@ private:
     float chaseRange;
     float stopChaseRange;
     float attackRange;
+    float detectionRange;
 
     float attackTimer;
     float attackDuration;
@@ -128,6 +139,9 @@ private:
     bool grounded;
     float velocityY;
     float gravity;
+
+    bool shotThisFrame;
+
 
 };
 

@@ -171,6 +171,40 @@ void Game::update() {
         enemy.update(deltaTime, player.getX(), player.getY(), map);
     }
 
+    // Enemy Bullet
+    for (Enemy& enemy : enemies) {
+        // std::cout << "enemy didShootThisFrame = " << enemy.didShootThisFrame() << std::endl;
+        if (enemy.isDead()) {
+            continue;
+        }
+
+        if (!enemy.didShootThisFrame()) {
+            continue;
+        }
+
+        SDL_FRect enemyBounds = enemy.getBounds();
+
+        EnemyBullet bullet;
+        int dir = (player.getX() < enemyBounds.x) ? -1 : 1;
+
+        float bulletX = enemyBounds.x + enemyBounds.w / 2.0f + dir * 20.0f;
+        float bulletY = enemyBounds.y + enemyBounds.h / 2.0f;
+
+        bullet.init(bulletX, bulletY, dir);
+        enemyBullets.push_back(bullet);
+
+        enemy.resetShotThisFrame();
+    }
+
+    for (EnemyBullet& bullet : enemyBullets) {
+        bullet.update(deltaTime);
+
+        SDL_FRect bounds = bullet.getBounds();
+        if (bounds.x < 0.0f || bounds.x > mapPixelWidth) {
+            bullet.deactivate();
+        }
+    }
+
     // Camera follow
     camera.x = player.getX() + player.getWidth() / 2.0f - camera.w / 2.0f;
     camera.y = player.getY() + player.getHeight() / 2.0f - camera.h / 2.0f;
@@ -313,6 +347,42 @@ void Game::update() {
             break;
         }
     }
+
+    // Enemy bullets damage player
+    for (EnemyBullet& bullet : enemyBullets) {
+        if (!bullet.isActive()) {
+            continue;
+        }
+
+        SDL_FRect bulletBounds = bullet.getBounds();
+
+        bool overlaps =
+            playerBounds.x < bulletBounds.x + bulletBounds.w &&
+            playerBounds.x + playerBounds.w > bulletBounds.x &&
+            playerBounds.y < bulletBounds.y + bulletBounds.h &&
+            playerBounds.y + playerBounds.h > bulletBounds.y;
+
+        if (overlaps) {
+            player.takeDamage(1);
+            bullet.deactivate();
+            std::cout << "Player hit by enemy bullet. HP: " << player.getHP() << std::endl;
+        }
+    }
+
+    // ERASE PROJECTILES
+    bullets.erase(
+    std::remove_if(bullets.begin(), bullets.end(),
+                   [](const Bullet& bullet) {
+                       return !bullet.isActive();
+                   }),
+    bullets.end());
+
+    enemyBullets.erase(
+    std::remove_if(enemyBullets.begin(), enemyBullets.end(),
+                   [](const EnemyBullet& bullet) {
+                       return !bullet.isActive();
+                   }),
+    enemyBullets.end());
 }
 
 
@@ -356,7 +426,6 @@ void Game::render() {
     updateAmmoText();
 
     // WORLD
-
     // Map first
     map.render(renderer, tilesetTexture, camRect);
 
@@ -379,6 +448,12 @@ void Game::render() {
     // Enemies
     for (Enemy& enemy : enemies) {
         enemy.render(renderer, camRect);
+    }
+
+    // std::cout << "Enemy bullets rendered: " << enemyBullets.size() << std::endl;
+    // Enemy Bullets
+    for (EnemyBullet& bullet : enemyBullets) {
+        bullet.render(renderer, camRect);
     }
 
     // Bullets
@@ -426,6 +501,7 @@ bool Game::loadStage(const char* mapPath) {
         enemy.clean();
     }
     enemies.clear();
+    enemyBullets.clear();
 
     for (Item& item : items) {
         item.clean();
@@ -500,6 +576,7 @@ void Game::clean() {
         enemy.clean();
     }
     enemies.clear();
+    enemyBullets.clear();
 
     for (Bullet& bullet : bullets) {
         bullet.deactivate();

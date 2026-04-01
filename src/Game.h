@@ -10,6 +10,8 @@
 #include "Enemy.h"
 #include "Bullet.h"
 #include "Item.h"
+#include "EnemyBullet.h"
+#include <vector>
 
 
 class Game {
@@ -40,6 +42,7 @@ private:
     Camera camera;
     std::vector<Enemy> enemies; // multiple enemies
     std::vector<Bullet> bullets;
+    std::vector<EnemyBullet> enemyBullets;
     float shootCooldown;
     float shootTimer;
     std::vector<Item> items;

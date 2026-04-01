@@ -34,9 +34,15 @@
    <object id="30" x="400" y="500" name="Patrol">
      <point/>
    </object>
-   <object id="31" x="900" y="500" name="Shooting">
+   <object id="31" x="900" y="500" name="Shooter">
      <point/>
    </object>
+      <object id="350" x="1000" y="500" name="Shooter">
+        <point/>
+      </object>
+      <object id="315" x="1100" y="500" name="Flying">
+        <point/>
+      </object>
  </objectgroup>
  <objectgroup id="3" name="Item Layer">
   <object id="10" x="100" y="600" name="Coin">

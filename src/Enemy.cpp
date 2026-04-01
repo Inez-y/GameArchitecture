@@ -31,7 +31,8 @@ gravity(900.0f),
       currentBossAttack(BossAttackType::None),
       bossAttackTimer(0.0f),
       bossAttackCooldown(1.5f),
-      bossAttackPhase(0) {
+      bossAttackPhase(0),
+shotThisFrame(false){
     dstRect = {0.0f, 0.0f, 32.0f, 32.0f};
 }
 
@@ -59,13 +60,21 @@ bool Enemy::init(SDL_Renderer* renderer, const char* texturePath,
     if (type == EnemyType::Boss) {
         speed = 140.0f;
         health = 20;
+        attackRange = 60.0f;
+        chaseRange = 260.0f;
         state = EnemyState::Idle;
     } else if (type == EnemyType::Shooter) {
         state = EnemyState::Idle;
+        attackRange = 250.0f;
+        chaseRange = 300.0f;
     } else if (type == EnemyType::Flying) {
         state = EnemyState::Chase;
+        attackRange = 60.0f;
+        chaseRange = 260.0f;
     } else {
         state = EnemyState::Patrol;
+        attackRange = 40.0f;
+        chaseRange = 220.0f;
     }
 
     float texW = 0.0f;
@@ -83,33 +92,65 @@ void Enemy::update(float deltaTime, float playerX, float playerY, const Map& map
     switch (type) {
         case EnemyType::Patrol:
             switch (state) {
-            case EnemyState::Idle:
+                case EnemyState::Idle:
                     updateIdle(deltaTime, playerX, playerY);
                     break;
-            case EnemyState::Patrol:
+                case EnemyState::Patrol:
                     updatePatrol(deltaTime, playerX, playerY);
                     break;
-            case EnemyState::Chase:
+                case EnemyState::Chase:
                     updateChase(deltaTime, playerX, playerY);
                     break;
-            case EnemyState::Attack:
-                    updateAttack(deltaTime, playerX, playerY);
+                case EnemyState::Attack:
+                    updatePatrolAttack(deltaTime, playerX, playerY);
                     break;
-            case EnemyState::Hurt:
+                case EnemyState::Hurt:
                     updateHurt(deltaTime, playerX, playerY);
                     break;
-            case EnemyState::Dead:
+                case EnemyState::Dead:
                     updateDead(deltaTime, playerX, playerY);
                     break;
             }
             break;
 
         case EnemyType::Shooter:
-            updateShooterType(deltaTime, playerX, playerY);
+            switch (state) {
+                case EnemyState::Idle:
+                    updateShooterIdle(deltaTime, playerX, playerY);
+                    break;
+                case EnemyState::Attack:
+                    updateShooterAttack(deltaTime, playerX, playerY);
+                    break;
+                case EnemyState::Hurt:
+                    updateHurt(deltaTime, playerX, playerY);
+                    break;
+                case EnemyState::Dead:
+                    updateDead(deltaTime, playerX, playerY);
+                    break;
+                default:
+                    changeState(EnemyState::Idle);
+                    break;
+            }
             break;
 
         case EnemyType::Flying:
-            updateFlyingType(deltaTime, playerX, playerY);
+            switch (state) {
+                case EnemyState::Chase:
+                    updateFlyingType(deltaTime, playerX, playerY);
+                    break;
+                case EnemyState::Attack:
+                    updateFlyingAttack(deltaTime, playerX, playerY);
+                    break;
+                case EnemyState::Hurt:
+                    updateHurt(deltaTime, playerX, playerY);
+                    break;
+                case EnemyState::Dead:
+                    updateDead(deltaTime, playerX, playerY);
+                    break;
+                default:
+                    changeState(EnemyState::Chase);
+                    break;
+            }
             break;
 
         case EnemyType::Boss:
@@ -193,10 +234,17 @@ void Enemy::updateAttack(float deltaTime, float playerX, float playerY) {
 
     attackTimer += deltaTime;
 
+    // Melee
     if (!damageAppliedThisAttack && attackTimer >= attackDuration * 0.5f) {
         damageAppliedThisAttack = true;
         attackHitThisFrame = true;
-        std::cout << "Enemy attack hit frame\n";
+    }
+
+    // Shooter
+    if (!damageAppliedThisAttack && attackTimer >= attackDuration * 0.5f) {
+        damageAppliedThisAttack = true;
+        // attackHitThisFrame = true;
+        shotThisFrame = true;
     }
 
     if (attackTimer >= attackDuration) {
@@ -560,4 +608,93 @@ void Enemy::applyGravity(float deltaTime, const Map& map) {
         velocityY = 0.0f;
         grounded = true;
     }
+}
+
+void Enemy::updatePatrolAttack(float deltaTime, float playerX, float playerY) {
+    float dist = distanceToPlayer(playerX, playerY);
+
+    attackTimer += deltaTime;
+
+    if (!damageAppliedThisAttack && attackTimer >= attackDuration * 0.5f) {
+        damageAppliedThisAttack = true;
+        attackHitThisFrame = true;
+        std::cout << "Patrol enemy melee hit\n";
+    }
+
+    if (attackTimer >= attackDuration) {
+        if (dist <= attackRange) {
+            changeState(EnemyState::Attack);
+        } else if (dist <= chaseRange) {
+            changeState(EnemyState::Chase);
+        } else {
+            changeState(EnemyState::Patrol);
+        }
+    }
+}
+
+void Enemy::updateShooterAttack(float deltaTime, float playerX, float playerY) {
+    attackTimer += deltaTime;
+
+    if (playerX < x) {
+        direction = -1;
+    } else {
+        direction = 1;
+    }
+
+    if (!damageAppliedThisAttack && attackTimer >= 0.5f) {
+        damageAppliedThisAttack = true;
+        shotThisFrame = true;
+        std::cout << "Shooter enemy fires projectile\n";
+    }
+
+    if (attackTimer >= 1.0f) {
+        float dist = distanceToPlayer(playerX, playerY);
+
+        if (dist <= chaseRange) {
+            changeState(EnemyState::Idle);
+        } else {
+            changeState(EnemyState::Idle);
+        }
+    }
+}
+
+void Enemy::updateShooterIdle(float deltaTime, float playerX, float playerY) {
+    float dist = distanceToPlayer(playerX, playerY);
+
+    if (dist <= chaseRange) {
+        changeState(EnemyState::Attack);
+    }
+}
+
+void Enemy::updateFlyingAttack(float deltaTime, float playerX, float playerY) {
+    float dx = playerX - x;
+    float dy = playerY - y;
+
+    if (dx < 0.0f) direction = -1;
+    else direction = 1;
+
+    x += direction * speed * 1.2f * deltaTime;
+
+    if (dy < -10.0f) y -= speed * deltaTime * 0.8f;
+    else if (dy > 10.0f) y += speed * deltaTime * 0.8f;
+
+    attackTimer += deltaTime;
+
+    if (!damageAppliedThisAttack && attackTimer >= 0.3f) {
+        damageAppliedThisAttack = true;
+        attackHitThisFrame = true;
+        std::cout << "Flying enemy dive hit\n";
+    }
+
+    if (attackTimer >= 0.7f) {
+        changeState(EnemyState::Chase);
+    }
+}
+
+bool Enemy::didShootThisFrame() const {
+    return shotThisFrame;
+}
+
+void Enemy::resetShotThisFrame() {
+    shotThisFrame = false;
 }
