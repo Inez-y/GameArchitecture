@@ -1,5 +1,6 @@
 #include "Game.h"
 #include <iostream>
+#include <string>
 
 Game::Game()
     : window(nullptr),
@@ -37,7 +38,20 @@ bool Game::init(const char* title, int width, int height) {
         return false;
     }
 
-    // Map tiles
+    if (!TTF_Init()) {
+        std::cout << "TTF_Init failed: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    uiFont = TTF_OpenFont("../assets/Fonts/PixelifySans_Font.ttf", 24.0f);
+    if (!uiFont) {
+        std::cout << "Failed to load font: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    hpTextTexture = nullptr;
+    hpTextRect = {20.0f, 20.0f, 0.0f, 0.0f};
+
     tilesetTexture = IMG_LoadTexture(renderer, "../assets/tileset.png");
     if (!tilesetTexture) {
         std::cout << "Failed to load tileset texture: " << SDL_GetError() << std::endl;
@@ -47,50 +61,32 @@ bool Game::init(const char* title, int width, int height) {
         return false;
     }
 
-    // Load TMX map
-    if (!map.load("../assets/map1.tmx")) {
-        std::cout << "Failed to load TMX map.\n";
-        SDL_DestroyTexture(tilesetTexture);
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+    doorTexture = IMG_LoadTexture(renderer, "../assets/door.png");
+    if (!doorTexture) {
+        std::cout << "Failed to load door texture: " << SDL_GetError() << std::endl;
         return false;
     }
 
-    if (!loadStage("../assets/map1.tmx")) {
+    // Initialize player ONCE. Position will be changed by loadStage().
+    if (!player.init(renderer, "../assets/player.png", 100.0f, 100.0f)) {
+        std::cout << "Failed to initialize player.\n";
         return false;
     }
 
+    camera.x = 0.0f;
+    camera.y = 0.0f;
+    camera.w = static_cast<float>(width);
+    camera.h = static_cast<float>(height);
+
+    if (!loadStage("../assets/map1_boss.tmx")) {
+        return false;
+    }
 
     std::cout << "Map loaded successfully.\n";
     std::cout << "Map size: " << map.getWidth() << " x " << map.getHeight() << std::endl;
     std::cout << "Tile size: " << map.getTileWidth() << " x " << map.getTileHeight() << std::endl;
     std::cout << "Item spawn count: " << map.getItemSpawns().size() << std::endl;
     std::cout << "Collider count: " << map.getColliders().size() << std::endl;
-
-    // Load a player
-    float playerStartX = 100.0f;
-    float playerStartY = 100.0f;
-
-    if (map.hasPlayerSpawn()) {
-        SpawnPoint spawn = map.getPlayerSpawn();
-        playerStartX = spawn.x;
-        playerStartY = spawn.y;
-    }
-
-    if (!player.init(renderer, "../assets/player.png", playerStartX, playerStartY)) {
-        std::cout << "Failed to initialize player.\n";
-        return false;
-    }
-
-    // Load a camera
-    camera.x = 0.0;
-    camera.y = 0.0;
-    camera.w = static_cast<float>(width);
-    camera.h = static_cast<float>(height);
-
-    // Load door
-    doorTexture = IMG_LoadTexture(renderer, "../assets/door.png");
     std::cout << "Door count: " << map.getDoors().size() << std::endl;
 
     for (const DoorSpawn& door : map.getDoors()) {
@@ -102,50 +98,7 @@ bool Game::init(const char* title, int width, int height) {
                   << std::endl;
     }
 
-    if (!doorTexture) {
-        std::cout << "Failed to load door texture: \n" << SDL_GetError() << std::endl;
-        return false;
-    }
-
-    // Load enemies
-    const std::vector<EnemySpawn>& enemySpawns = map.getEnemySpawns();
-
-    for (const EnemySpawn& spawn : enemySpawns) {
-        EnemyType type = stringToEnemyType(spawn.type);
-
-        enemies.emplace_back();
-
-        float patrolLeft = spawn.x - 100.0f;
-        float patrolRight = spawn.x + 100.0f;
-
-        if (!enemies.back().init(renderer,
-                             enemyTexturePath(type),
-                             spawn.x, spawn.y,
-                             patrolLeft, patrolRight,
-                             type)) {
-            std::cout << "Failed to initialize one enemy.\n";
-            enemies.pop_back();
-        }
-    }
-
-    // Load items
-    const std::vector<ItemSpawn>& itemSpawns = map.getItemSpawns();
-
-    for (const ItemSpawn& spawn : itemSpawns) {
-        ItemType type = stringToItemType(spawn.type);
-
-        items.emplace_back();
-
-        if (!items.back().init(renderer, itemTexturePath(type), spawn.x, spawn.y, type)) {
-            std::cout << "Failed to initialize one item.\n";
-            items.pop_back();
-        }
-    }
-
-
-    // Previous tick
     lastCounter = SDL_GetTicks();
-
     isRunning = true;
     return true;
 }
@@ -167,9 +120,8 @@ void Game::handleEvents() {
             isRunning = false;
         }
 
-        // Bullet
         if (event.type == SDL_EVENT_KEY_DOWN) {
-            if (event.key.scancode == SDL_SCANCODE_SPACE) {
+            if (event.key.scancode == SDL_SCANCODE_SPACE && shootTimer <= 0.0f) {
                 Bullet bullet;
 
                 float bulletX = player.getX() + player.getWidth() / 2.0f;
@@ -188,16 +140,29 @@ void Game::handleEvents() {
 }
 
 void Game::update() {
-    // Camera
     Uint64 currentCounter = SDL_GetTicks();
     float deltaTime = (currentCounter - lastCounter) / 1000.0f;
     lastCounter = currentCounter;
+
+    if (shootTimer > 0.0f) {
+        shootTimer -= deltaTime;
+    }
+
+    if (doorTimer > 0.0f) {
+        doorTimer -= deltaTime;
+    }
 
     float mapPixelWidth = static_cast<float>(map.getWidth() * map.getTileWidth());
     float mapPixelHeight = static_cast<float>(map.getHeight() * map.getTileHeight());
 
     player.update(deltaTime, map);
 
+    // Update enemies FIRST
+    for (Enemy& enemy : enemies) {
+        enemy.update(deltaTime, player.getX(), player.getY());
+    }
+
+    // Camera follow
     camera.x = player.getX() + player.getWidth() / 2.0f - camera.w / 2.0f;
     camera.y = player.getY() + player.getHeight() / 2.0f - camera.h / 2.0f;
 
@@ -215,33 +180,49 @@ void Game::update() {
         if (camera.y > mapPixelHeight - camera.h) camera.y = mapPixelHeight - camera.h;
     }
 
-    // Camera debugging
-    // std::cout << "Player: " << player.getX() << ", " << player.getY() << std::endl;
-    // std::cout << "Camera: " << camera.x << ", " << camera.y << std::endl;
-    // std::cout << "Map pixels: " << map.getWidth() * map.getTileWidth()
-    //           << ", " << map.getHeight() * map.getTileHeight() << std::endl;
+    SDL_FRect playerBounds;
+    playerBounds.x = player.getX();
+    playerBounds.y = player.getY();
+    playerBounds.w = player.getWidth();
+    playerBounds.h = player.getHeight();
 
-    // Enemy
+    // Enemy attacks damage player
     for (Enemy& enemy : enemies) {
-        enemy.update(deltaTime, player.getX(), player.getY());
+        if (enemy.isDead()) {
+            continue;
+        }
+
+        if (!enemy.didAttackHit()) {
+            continue;
+        }
+
+        SDL_FRect enemyBounds = enemy.getBounds();
+
+        bool overlaps =
+            playerBounds.x < enemyBounds.x + enemyBounds.w &&
+            playerBounds.x + playerBounds.w > enemyBounds.x &&
+            playerBounds.y < enemyBounds.y + enemyBounds.h &&
+            playerBounds.y + playerBounds.h > enemyBounds.y;
+
+        if (overlaps) {
+            player.takeDamage(1);
+            std::cout << "Player took 1 damage. HP: " << player.getHP() << std::endl;
+        }
+
+        enemy.resetAttackHit();
     }
 
-    // Bullets
+    // Update bullets
     for (Bullet& bullet : bullets) {
         bullet.update(deltaTime);
 
         SDL_FRect bulletBounds = bullet.getBounds();
-
-        if (shootTimer > 0.0f) {
-            shootTimer -= deltaTime;
-        }
-
         if (bulletBounds.x < 0.0f || bulletBounds.x > mapPixelWidth) {
             bullet.deactivate();
         }
     }
 
-    // Bullets
+    // Bullet hits enemy
     for (Bullet& bullet : bullets) {
         if (!bullet.isActive()) {
             continue;
@@ -270,13 +251,7 @@ void Game::update() {
         }
     }
 
-    // Items
-    SDL_FRect playerBounds;
-    playerBounds.x = player.getX();
-    playerBounds.y = player.getY();
-    playerBounds.w = player.getWidth();
-    playerBounds.h = player.getHeight();
-
+    // Item pickup
     for (Item& item : items) {
         if (!item.isActive()) {
             continue;
@@ -293,28 +268,18 @@ void Game::update() {
         if (overlaps) {
             if (item.getType() == ItemType::Coin) {
                 coinCount++;
-                std::cout << "Picked up coin!\n";
+                std::cout << "Picked up coin. Coins: " << coinCount << std::endl;
             }
             else if (item.getType() == ItemType::Health) {
-                std::cout << "Picked up health!\n";
+                player.heal(1);
+                std::cout << "Picked up health. HP: " << player.getHP() << std::endl;
             }
 
             item.pickUp();
         }
     }
 
-    // Door
-    playerBounds.x = player.getX();
-    playerBounds.y = player.getY();
-    playerBounds.w = player.getWidth();
-    playerBounds.h = player.getHeight();
-
-    // Allow door transition when cooldown is done
-    if (doorTimer > 0.0f) {
-        doorTimer -= deltaTime;
-    }
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+    // Door transition
     for (const DoorSpawn& door : map.getDoors()) {
         SDL_FRect doorRect;
         doorRect.x = door.x;
@@ -322,18 +287,14 @@ void Game::update() {
         doorRect.w = door.w;
         doorRect.h = door.h;
 
-        bool overlaps = playerBounds.x < doorRect.x + doorRect.w &&
+        bool overlaps =
+            playerBounds.x < doorRect.x + doorRect.w &&
             playerBounds.x + playerBounds.w > doorRect.x &&
             playerBounds.y < doorRect.y + doorRect.h &&
-                playerBounds.y + playerBounds.h > doorRect.y;
+            playerBounds.y + playerBounds.h > doorRect.y;
 
         if (overlaps) {
             std::cout << "Player stepped on door! Target map: " << door.targetMap << std::endl;
-        }
-
-        if (overlaps && !door.targetMap.empty()) {
-            loadStage(door.targetMap.c_str());
-            break;
         }
 
         if (overlaps && doorTimer <= 0.0f && !door.targetMap.empty()) {
@@ -343,18 +304,53 @@ void Game::update() {
             break;
         }
     }
+}
 
+
+bool Game::updateHPText() {
+    if (hpTextTexture) {
+        SDL_DestroyTexture(hpTextTexture);
+        hpTextTexture = nullptr;
+    }
+
+    std::string hpString = "HP: " + std::to_string(player.getHP());
+
+    SDL_Color color = {255, 255, 255, 255};
+    SDL_Surface* textSurface = TTF_RenderText_Blended(uiFont, hpString.c_str(), 0, color);
+    if (!textSurface) {
+        std::cout << "Failed to render HP text surface: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    hpTextTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    if (!hpTextTexture) {
+        std::cout << "Failed to create HP text texture: " << SDL_GetError() << std::endl;
+        SDL_DestroySurface(textSurface);
+        return false;
+    }
+
+    hpTextRect.w = static_cast<float>(textSurface->w);
+    hpTextRect.h = static_cast<float>(textSurface->h);
+
+    SDL_DestroySurface(textSurface);
+    return true;
 }
 
 void Game::render() {
     SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);
     SDL_RenderClear(renderer);
+
     SDL_FRect camRect{camera.x, camera.y, camera.w, camera.h};
 
-    map.render(renderer, tilesetTexture, camRect);
-    player.render(renderer, camRect);
+    // Update UI text
+    updateHPText();
 
-    // Door
+    // WORLD
+
+    // Map first
+    map.render(renderer, tilesetTexture, camRect);
+
+    // Doors
     for (const DoorSpawn& door : map.getDoors()) {
         SDL_FRect dstRect;
         dstRect.x = door.x - camera.x;
@@ -363,6 +359,11 @@ void Game::render() {
         dstRect.h = door.h;
 
         SDL_RenderTexture(renderer, doorTexture, nullptr, &dstRect);
+    }
+
+    // Items
+    for (Item& item : items) {
+        item.render(renderer, camRect);
     }
 
     // Enemies
@@ -375,26 +376,34 @@ void Game::render() {
         bullet.render(renderer, camRect);
     }
 
-    // Items
-    for (Item& item : items) {
-        item.render(renderer, camRect);
-    }
-    // Draw collision rectangles in red
-    // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    // for (const SDL_FRect& rect : map.getColliders()) {
+    // Player last in world so player appears on top
+    player.render(renderer, camRect);
+
+    // Door debug boxes
+    // SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+    // for (const DoorSpawn& door : map.getDoors()) {
+    //     SDL_FRect rect;
+    //     rect.x = door.x - camera.x;
+    //     rect.y = door.y - camera.y;
+    //     rect.w = door.w;
+    //     rect.h = door.h;
     //     SDL_RenderRect(renderer, &rect);
     // }
 
-    // Draw item points in green
-    // SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-    // for (const SpawnPoint& p : map.getItemSpawnPoints()) {
-    //     SDL_FRect pointRect;
-    //     pointRect.x = p.x - 4.0f;
-    //     pointRect.y = p.y - 4.0f;
-    //     pointRect.w = 8.0f;
-    //     pointRect.h = 8.0f;
-    //     SDL_RenderFillRect(renderer, &pointRect);
+
+    // Collision debug
+    // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    // for (const SDL_FRect& rect : map.getColliders()) {
+    //     SDL_FRect screenRect = rect;
+    //     screenRect.x -= camera.x;
+    //     screenRect.y -= camera.y;
+    //     SDL_RenderRect(renderer, &screenRect);
     // }
+
+    // UI
+    if (hpTextTexture) {
+        SDL_RenderTexture(renderer, hpTextTexture, nullptr, &hpTextRect);
+    }
 
     SDL_RenderPresent(renderer);
 }
@@ -455,6 +464,10 @@ bool Game::loadStage(const char* mapPath) {
         }
     }
 
+    std::cout << "Loaded stage: " << mapPath << std::endl;
+    std::cout << "Enemies spawned: " << enemies.size() << std::endl;
+    std::cout << "Items spawned: " << items.size() << std::endl;
+
     return true;
 }
 
@@ -484,6 +497,19 @@ void Game::clean() {
         SDL_DestroyTexture(doorTexture);
         doorTexture = nullptr;
     }
+
+    // Font
+    if (hpTextTexture) {
+        SDL_DestroyTexture(hpTextTexture);
+        hpTextTexture = nullptr;
+    }
+
+    if (uiFont) {
+        TTF_CloseFont(uiFont);
+        uiFont = nullptr;
+    }
+
+    TTF_Quit();
 
     // Clear all drawings before renderer clearing
     if (renderer) {

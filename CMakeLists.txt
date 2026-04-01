@@ -6,9 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #Tell CMake where Homebrew libraries
 set(CMAKE_PREFIX_PATH "/opt/homebrew/opt/sdl3")
 set(CMAKE_PREFIX_PATH "/opt/homebrew/opt/sdl3_image")
+set(CMAKE_PREFIX_PATH "/opt/homebrew/opt/sdl3_ttf")
 
 include_directories("/opt/homebrew/opt/sdl3/include")
 include_directories("/opt/homebrew/opt/sdl3_image/include")
+include_directories("/opt/homebrew/opt/sdl3_ttf/include")
 ##
 #include_directories("/src") # new
 #include_directories("/src/ecs") # new
@@ -17,9 +19,13 @@ include_directories("/opt/homebrew/opt/sdl3_image/include")
 #
 link_directories("/opt/homebrew/opt/sdl3/lib")
 link_directories("/opt/homebrew/opt/sdl3_image/lib")
+link_directories("/opt/homebrew/opt/sdl3_ttf/lib")
 
 #Find SLD3
 find_package(SDL3 REQUIRED)
+find_package(SDL3_image REQUIRED)
+find_package(SDL3_ttf REQUIRED)
+
 add_executable(LastCarriage src
         src/main.cpp
         src/Map.h
@@ -43,5 +49,6 @@ add_executable(LastCarriage src
 
 target_link_libraries(LastCarriage
         SDL3::SDL3
-        sdl3_image)
+        SDL3_image::SDL3_image
+        SDL3_ttf::SDL3_ttf)
 

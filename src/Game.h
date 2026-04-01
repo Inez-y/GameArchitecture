@@ -2,6 +2,7 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <vector>
 #include "Map.h"
 #include "Player.h"
@@ -9,7 +10,7 @@
 #include "Enemy.h"
 #include "Bullet.h"
 #include "Item.h"
-#include "DoorSpawn.h"
+
 
 class Game {
 public:
@@ -25,6 +26,7 @@ private:
     void update();
     void render();
     bool loadStage(const char* mathPath);
+    bool updateHPText();
 
     SDL_Window* window;
     SDL_Renderer* renderer;
@@ -44,6 +46,11 @@ private:
 
     float doorTimer;
     float doorCooldown;
+
+    // HP Text placeholder
+    TTF_Font* uiFont;
+    SDL_Texture* hpTextTexture;
+    SDL_FRect hpTextRect;
 
     // Previous tick
     Uint64 lastCounter;

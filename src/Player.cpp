@@ -9,7 +9,9 @@ Player::Player()
       speed(200.0f),
       moveX(0.0f),
       moveY(0.0f),
-      facingDirection(1){
+      facingDirection(1),
+      hp(10),
+      maxHP(10) {
     dstRect = {x, y, 32.0f, 32.0f};
 }
 
@@ -115,4 +117,22 @@ void Player::setPosition(float newX, float newY) {
     y = newY;
     dstRect.x = x;
     dstRect.y = y;
+}
+
+int Player::getHP() const {
+    return hp;
+}
+
+void Player::takeDamage(int damage) {
+    hp -= damage;
+    if (hp < 0) {
+        hp = 0;
+    }
+}
+
+void Player::heal(int amount) {
+    hp += amount;
+    if (hp > maxHP) {
+        hp = maxHP;
+    }
 }

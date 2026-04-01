@@ -26,6 +26,10 @@ public:
     int getFacingDirection() const;
 
     void setPosition(float newX, float newY);
+
+    int getHP() const;
+    void takeDamage(int damage);
+    void heal(int amount);
 private:
     SDL_Texture* texture;
     SDL_FRect dstRect;
@@ -40,6 +44,9 @@ private:
 
     // For attack
     int facingDirection; // 1 (right) -1 (left)
+
+    int hp;
+    int maxHP;
 };
 
 #endif //LASTCARRIAGE_PLAYER_H

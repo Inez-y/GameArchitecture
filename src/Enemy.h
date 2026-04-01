@@ -49,6 +49,10 @@ public:
     EnemyState getState() const;
     bool isDead() const;
 
+    bool didAttackHit() const;
+
+    void resetAttackHit();
+
 
 private:
     // Enemy states
@@ -89,7 +93,6 @@ private:
 
     // Enemy state logic
     EnemyState state;
-    EnemyType type;
 
     float idleTimer;
     float idleDuration;
@@ -112,6 +115,9 @@ private:
     float bossAttackTimer;
     float bossAttackCooldown;
     int bossAttackPhase;
+
+    EnemyType type;
+    bool attackHitThisFrame;
 };
 
 #endif //LASTCARRIAGE_ENEMY_H
