@@ -4,7 +4,7 @@
 #include <string>
 #include <SDL3/SDL.h>
 
-#include "Map.h"
+#include "map/Map.h"
 
 enum class EnemyState {
     Idle,

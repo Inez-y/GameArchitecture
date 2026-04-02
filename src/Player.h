@@ -4,7 +4,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-#include "Map.h"
+#include "map/Map.h"
 
 class Player {
 public:

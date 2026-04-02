@@ -1,5 +1,5 @@
 #include "Map.h"
-#include "vendor/tinyxml2.h"
+#include "../vendor/tinyxml2.h"
 
 #include <iostream>
 #include <sstream>

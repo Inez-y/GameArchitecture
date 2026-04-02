@@ -28,8 +28,8 @@ find_package(SDL3_ttf REQUIRED)
 
 add_executable(LastCarriage src
         src/main.cpp
-        src/Map.h
-        src/Map.cpp
+        src/map/Map.h
+        src/map/Map.cpp
         src/Game.cpp
         src/Game.h
         src/vendor/tinyxml2.h
@@ -47,6 +47,18 @@ add_executable(LastCarriage src
         src/DoorSpawn.h
         src/EnemyBullet.cpp
         src/EnemyBullet.h
+        src/ecs/Component.h
+        src/ecs/Entity.h
+        src/ecs/Manager.h
+        src/components/TransformComponent.h
+        src/components/HealthComponent.h
+        src/components/SpriteComponent.h
+        src/components/PhysicsComponent.h
+        src/components/WeaponComponent.h
+        src/components/InputComponent.h
+        src/factories/PlayerFactory.cpp
+        src/factories/PlayerFactory.h
+        src/components/PlayerTagComponent.h
 )
 
 target_link_libraries(LastCarriage

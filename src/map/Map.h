@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "DoorSpawn.h"
+#include "../DoorSpawn.h"
 
 // Items
 struct SpawnPoint {

@@ -1,19 +1,23 @@
 #include "Game.h"
-#include <iostream>
-#include <string>
 
 Game::Game()
     : window(nullptr),
       renderer(nullptr),
       tilesetTexture(nullptr),
-ammoTextTexture(nullptr),
-ammoTextRect(0.0f, 0.0f, 0.0f, 0.0f),
+      doorTexture(nullptr),
+      uiFont(nullptr),
+      hpTextTexture(nullptr),
+      hpTextRect{20.0f, 20.0f, 0.0f, 0.0f},
+      ammoTextTexture(nullptr),
+      ammoTextRect{20.0f, 50.0f, 0.0f, 0.0f},
+      isRunning(false),
+      lastCounter(0),
+      shootCooldown(0.2f),
+      shootTimer(0.0f),
+      doorTimer(0.0f),
+      doorCooldown(0.5f),
       coinCount(0),
-shootCooldown(0.2f),
-shootTimer(0.0f),
-doorTimer(0.0f),
-doorCooldown(0.5f),
-      isRunning(false) {
+      playerEntity(nullptr) {
 }
 
 Game::~Game() {
@@ -51,27 +55,15 @@ bool Game::init(const char* title, int width, int height) {
         return false;
     }
 
-    hpTextTexture = nullptr;
-    hpTextRect = {20.0f, 20.0f, 0.0f, 0.0f};
-
     tilesetTexture = IMG_LoadTexture(renderer, "../assets/Maps/tileset.png");
     if (!tilesetTexture) {
         std::cout << "Failed to load tileset texture: " << SDL_GetError() << std::endl;
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
         return false;
     }
 
     doorTexture = IMG_LoadTexture(renderer, "../assets/door.png");
     if (!doorTexture) {
         std::cout << "Failed to load door texture: " << SDL_GetError() << std::endl;
-        return false;
-    }
-
-    // Initialize player ONCE. Position will be changed by loadStage().
-    if (!player.init(renderer, "../assets/player.png", 100.0f, 100.0f)) {
-        std::cout << "Failed to initialize player.\n";
         return false;
     }
 
@@ -115,8 +107,15 @@ void Game::run() {
 }
 
 void Game::handleEvents() {
-    SDL_Event event;
+    if (!playerEntity) {
+        return;
+    }
 
+    auto& input = playerEntity->getComponent<InputComponent>();
+    auto& weapon = playerEntity->getComponent<WeaponComponent>();
+    auto& transform = playerEntity->getComponent<TransformComponent>();
+
+    SDL_Event event;
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_EVENT_QUIT) {
             isRunning = false;
@@ -124,31 +123,40 @@ void Game::handleEvents() {
 
         if (event.type == SDL_EVENT_KEY_DOWN) {
             if (event.key.scancode == SDL_SCANCODE_R) {
-                player.startReload();
+                weapon.startReload();
             }
 
             if (event.key.scancode == SDL_SCANCODE_SPACE &&
                 shootTimer <= 0.0f &&
-                player.canShoot()) {
+                weapon.canShoot()) {
                 Bullet bullet;
 
-                float bulletX = player.getX() + player.getWidth() / 2.0f;
-                float bulletY = player.getY() + player.getHeight() / 2.0f;
+                float bulletX = transform.x + transform.w / 2.0f;
+                float bulletY = transform.y + transform.h / 2.0f;
 
-                bullet.init(bulletX, bulletY, player.getFacingDirection());
+                bullet.init(bulletX, bulletY, weapon.getFacingDirection());
                 bullets.push_back(bullet);
 
-                player.consumeAmmo();
+                weapon.consumeAmmo();
                 shootTimer = shootCooldown;
-                }
+            }
         }
     }
 
     const bool* keyStates = SDL_GetKeyboardState(nullptr);
-    player.handleInput(keyStates);
+    input.handleInput(keyStates);
 }
 
 void Game::update() {
+    if (!playerEntity) {
+        return;
+    }
+
+    auto& transform = playerEntity->getComponent<TransformComponent>();
+    auto& physics = playerEntity->getComponent<PhysicsComponent>();
+    auto& health = playerEntity->getComponent<HealthComponent>();
+    auto& weapon = playerEntity->getComponent<WeaponComponent>();
+
     Uint64 currentCounter = SDL_GetTicks();
     float deltaTime = (currentCounter - lastCounter) / 1000.0f;
     lastCounter = currentCounter;
@@ -164,16 +172,16 @@ void Game::update() {
     float mapPixelWidth = static_cast<float>(map.getWidth() * map.getTileWidth());
     float mapPixelHeight = static_cast<float>(map.getHeight() * map.getTileHeight());
 
-    player.update(deltaTime, map);
+    physics.update(deltaTime, map);
+    weapon.update(deltaTime);
 
-    // Update enemies FIRST
+    // Update enemies
     for (Enemy& enemy : enemies) {
-        enemy.update(deltaTime, player.getX(), player.getY(), map);
+        enemy.update(deltaTime, transform.x, transform.y, map);
     }
 
-    // Enemy Bullet
+    // Spawn enemy bullets
     for (Enemy& enemy : enemies) {
-        // std::cout << "enemy didShootThisFrame = " << enemy.didShootThisFrame() << std::endl;
         if (enemy.isDead()) {
             continue;
         }
@@ -185,7 +193,7 @@ void Game::update() {
         SDL_FRect enemyBounds = enemy.getBounds();
 
         EnemyBullet bullet;
-        int dir = (player.getX() < enemyBounds.x) ? -1 : 1;
+        int dir = (transform.x < enemyBounds.x) ? -1 : 1;
 
         float bulletX = enemyBounds.x + enemyBounds.w / 2.0f + dir * 20.0f;
         float bulletY = enemyBounds.y + enemyBounds.h / 2.0f;
@@ -196,6 +204,7 @@ void Game::update() {
         enemy.resetShotThisFrame();
     }
 
+    // Update enemy bullets
     for (EnemyBullet& bullet : enemyBullets) {
         bullet.update(deltaTime);
 
@@ -206,8 +215,8 @@ void Game::update() {
     }
 
     // Camera follow
-    camera.x = player.getX() + player.getWidth() / 2.0f - camera.w / 2.0f;
-    camera.y = player.getY() + player.getHeight() / 2.0f - camera.h / 2.0f;
+    camera.x = transform.x + transform.w / 2.0f - camera.w / 2.0f;
+    camera.y = transform.y + transform.h / 2.0f - camera.h / 2.0f;
 
     if (mapPixelWidth <= camera.w) {
         camera.x = 0.0f;
@@ -223,13 +232,9 @@ void Game::update() {
         if (camera.y > mapPixelHeight - camera.h) camera.y = mapPixelHeight - camera.h;
     }
 
-    SDL_FRect playerBounds;
-    playerBounds.x = player.getX();
-    playerBounds.y = player.getY();
-    playerBounds.w = player.getWidth();
-    playerBounds.h = player.getHeight();
+    SDL_FRect playerBounds{transform.x, transform.y, transform.w, transform.h};
 
-    // Enemy attacks damage player
+    // Enemy melee/contact damage
     for (Enemy& enemy : enemies) {
         if (enemy.isDead()) {
             continue;
@@ -248,14 +253,14 @@ void Game::update() {
             playerBounds.y + playerBounds.h > enemyBounds.y;
 
         if (overlaps) {
-            player.takeDamage(1);
-            std::cout << "Player took 1 damage. HP: " << player.getHP() << std::endl;
+            health.takeDamage(1);
+            std::cout << "Player took 1 damage. HP: " << health.getHP() << std::endl;
         }
 
         enemy.resetAttackHit();
     }
 
-    // Update bullets
+    // Update player bullets
     for (Bullet& bullet : bullets) {
         bullet.update(deltaTime);
 
@@ -265,7 +270,7 @@ void Game::update() {
         }
     }
 
-    // Bullet hits enemy
+    // Player bullets hit enemy
     for (Bullet& bullet : bullets) {
         if (!bullet.isActive()) {
             continue;
@@ -314,8 +319,8 @@ void Game::update() {
                 std::cout << "Picked up coin. Coins: " << coinCount << std::endl;
             }
             else if (item.getType() == ItemType::Health) {
-                player.heal(1);
-                std::cout << "Picked up health. HP: " << player.getHP() << std::endl;
+                health.heal(1);
+                std::cout << "Picked up health. HP: " << health.getHP() << std::endl;
             }
 
             item.pickUp();
@@ -324,11 +329,7 @@ void Game::update() {
 
     // Door transition
     for (const DoorSpawn& door : map.getDoors()) {
-        SDL_FRect doorRect;
-        doorRect.x = door.x;
-        doorRect.y = door.y;
-        doorRect.w = door.w;
-        doorRect.h = door.h;
+        SDL_FRect doorRect{door.x, door.y, door.w, door.h};
 
         bool overlaps =
             playerBounds.x < doorRect.x + doorRect.w &&
@@ -363,36 +364,36 @@ void Game::update() {
             playerBounds.y + playerBounds.h > bulletBounds.y;
 
         if (overlaps) {
-            player.takeDamage(1);
+            health.takeDamage(1);
             bullet.deactivate();
-            std::cout << "Player hit by enemy bullet. HP: " << player.getHP() << std::endl;
+            std::cout << "Player hit by enemy bullet. HP: " << health.getHP() << std::endl;
         }
     }
 
-    // ERASE PROJECTILES
     bullets.erase(
-    std::remove_if(bullets.begin(), bullets.end(),
-                   [](const Bullet& bullet) {
-                       return !bullet.isActive();
-                   }),
-    bullets.end());
+        std::remove_if(bullets.begin(), bullets.end(),
+                       [](const Bullet& bullet) { return !bullet.isActive(); }),
+        bullets.end());
 
     enemyBullets.erase(
-    std::remove_if(enemyBullets.begin(), enemyBullets.end(),
-                   [](const EnemyBullet& bullet) {
-                       return !bullet.isActive();
-                   }),
-    enemyBullets.end());
+        std::remove_if(enemyBullets.begin(), enemyBullets.end(),
+                       [](const EnemyBullet& bullet) { return !bullet.isActive(); }),
+        enemyBullets.end());
 }
 
-
 bool Game::updateHPText() {
+    if (!playerEntity) {
+        return false;
+    }
+
+    auto& health = playerEntity->getComponent<HealthComponent>();
+
     if (hpTextTexture) {
         SDL_DestroyTexture(hpTextTexture);
         hpTextTexture = nullptr;
     }
 
-    std::string hpString = "HP: " + std::to_string(player.getHP());
+    std::string hpString = "HP: " + std::to_string(health.getHP());
 
     SDL_Color color = {255, 255, 255, 255};
     SDL_Surface* textSurface = TTF_RenderText_Blended(uiFont, hpString.c_str(), 0, color);
@@ -415,21 +416,59 @@ bool Game::updateHPText() {
     return true;
 }
 
+bool Game::updateAmmoText() {
+    if (!playerEntity) {
+        return false;
+    }
+
+    auto& weapon = playerEntity->getComponent<WeaponComponent>();
+
+    if (ammoTextTexture) {
+        SDL_DestroyTexture(ammoTextTexture);
+        ammoTextTexture = nullptr;
+    }
+
+    std::string ammoString = "Ammo: " + std::to_string(weapon.getAmmo()) +
+                             "/" + std::to_string(weapon.getMaxAmmo());
+
+    if (weapon.isReloading()) {
+        ammoString += " (Reloading)";
+    }
+
+    SDL_Color color = {255, 255, 255, 255};
+    SDL_Surface* textSurface = TTF_RenderText_Blended(uiFont, ammoString.c_str(), 0, color);
+    if (!textSurface) {
+        return false;
+    }
+
+    ammoTextTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    if (!ammoTextTexture) {
+        SDL_DestroySurface(textSurface);
+        return false;
+    }
+
+    ammoTextRect.w = static_cast<float>(textSurface->w);
+    ammoTextRect.h = static_cast<float>(textSurface->h);
+
+    SDL_DestroySurface(textSurface);
+    return true;
+}
+
 void Game::render() {
+    if (!playerEntity) {
+        return;
+    }
+
     SDL_SetRenderDrawColor(renderer, 25, 25, 25, 255);
     SDL_RenderClear(renderer);
 
     SDL_FRect camRect{camera.x, camera.y, camera.w, camera.h};
 
-    // Update UI text
     updateHPText();
     updateAmmoText();
 
-    // WORLD
-    // Map first
     map.render(renderer, tilesetTexture, camRect);
 
-    // Doors
     for (const DoorSpawn& door : map.getDoors()) {
         SDL_FRect dstRect;
         dstRect.x = door.x - camera.x;
@@ -440,55 +479,28 @@ void Game::render() {
         SDL_RenderTexture(renderer, doorTexture, nullptr, &dstRect);
     }
 
-    // Items
     for (Item& item : items) {
         item.render(renderer, camRect);
     }
 
-    // Enemies
     for (Enemy& enemy : enemies) {
         enemy.render(renderer, camRect);
     }
 
-    // std::cout << "Enemy bullets rendered: " << enemyBullets.size() << std::endl;
-    // Enemy Bullets
     for (EnemyBullet& bullet : enemyBullets) {
         bullet.render(renderer, camRect);
     }
 
-    // Bullets
     for (Bullet& bullet : bullets) {
         bullet.render(renderer, camRect);
     }
 
-    // Player last in world so player appears on top
-    player.render(renderer, camRect);
+    playerEntity->getComponent<SpriteComponent>().draw(camRect);
 
-    // Door debug boxes
-    // SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
-    // for (const DoorSpawn& door : map.getDoors()) {
-    //     SDL_FRect rect;
-    //     rect.x = door.x - camera.x;
-    //     rect.y = door.y - camera.y;
-    //     rect.w = door.w;
-    //     rect.h = door.h;
-    //     SDL_RenderRect(renderer, &rect);
-    // }
-
-
-    // Collision debug
-    // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    // for (const SDL_FRect& rect : map.getColliders()) {
-    //     SDL_FRect screenRect = rect;
-    //     screenRect.x -= camera.x;
-    //     screenRect.y -= camera.y;
-    //     SDL_RenderRect(renderer, &screenRect);
-    // }
-
-    // UI
     if (hpTextTexture) {
         SDL_RenderTexture(renderer, hpTextTexture, nullptr, &hpTextRect);
     }
+
     if (ammoTextTexture) {
         SDL_RenderTexture(renderer, ammoTextTexture, nullptr, &ammoTextRect);
     }
@@ -515,11 +527,30 @@ bool Game::loadStage(const char* mapPath) {
         return false;
     }
 
-    if (map.hasPlayerSpawn()) {
-        SpawnPoint spawn = map.getPlayerSpawn();
-        player.setPosition(spawn.x, spawn.y);
-    } else {
-        player.setPosition(100.0f, 100.0f);
+    // Recreate player entity only once if needed
+    if (!playerEntity) {
+        playerEntity = &manager.addEntity();
+
+        float startX = 100.0f;
+        float startY = 100.0f;
+
+        if (map.hasPlayerSpawn()) {
+            SpawnPoint spawn = map.getPlayerSpawn();
+            startX = spawn.x;
+            startY = spawn.y;
+        }
+
+        PlayerFactory::createPlayer(*playerEntity, renderer, startX, startY);
+    }
+    else {
+        auto& transform = playerEntity->getComponent<TransformComponent>();
+
+        if (map.hasPlayerSpawn()) {
+            SpawnPoint spawn = map.getPlayerSpawn();
+            transform.setPosition(spawn.x, spawn.y);
+        } else {
+            transform.setPosition(100.0f, 100.0f);
+        }
     }
 
     const std::vector<EnemySpawn>& enemySpawns = map.getEnemySpawns();
@@ -538,7 +569,7 @@ bool Game::loadStage(const char* mapPath) {
                                  type)) {
             std::cout << "Failed to initialize one enemy.\n";
             enemies.pop_back();
-                                 }
+        }
     }
 
     const std::vector<ItemSpawn>& itemSpawns = map.getItemSpawns();
@@ -565,38 +596,36 @@ void Game::clean() {
         SDL_DestroyTexture(tilesetTexture);
         tilesetTexture = nullptr;
     }
-    if (ammoTextTexture) {
-        SDL_DestroyTexture(ammoTextTexture);
-        ammoTextTexture = nullptr;
-    }
-
-    player.clean();
-
-    for (Enemy& enemy : enemies) {
-        enemy.clean();
-    }
-    enemies.clear();
-    enemyBullets.clear();
-
-    for (Bullet& bullet : bullets) {
-        bullet.deactivate();
-    }
-
-    for (Item& item : items) {
-        item.clean();
-    }
-    items.clear();
 
     if (doorTexture) {
         SDL_DestroyTexture(doorTexture);
         doorTexture = nullptr;
     }
 
-    // Font
+    if (ammoTextTexture) {
+        SDL_DestroyTexture(ammoTextTexture);
+        ammoTextTexture = nullptr;
+    }
+
     if (hpTextTexture) {
         SDL_DestroyTexture(hpTextTexture);
         hpTextTexture = nullptr;
     }
+
+    for (Enemy& enemy : enemies) {
+        enemy.clean();
+    }
+    enemies.clear();
+
+    enemyBullets.clear();
+    bullets.clear();
+
+    for (Item& item : items) {
+        item.clean();
+    }
+    items.clear();
+
+    playerEntity = nullptr;
 
     if (uiFont) {
         TTF_CloseFont(uiFont);
@@ -605,7 +634,6 @@ void Game::clean() {
 
     TTF_Quit();
 
-    // Clear all drawings before renderer clearing
     if (renderer) {
         SDL_DestroyRenderer(renderer);
         renderer = nullptr;
@@ -617,36 +645,4 @@ void Game::clean() {
     }
 
     SDL_Quit();
-}
-
-bool Game::updateAmmoText() {
-    if (ammoTextTexture) {
-        SDL_DestroyTexture(ammoTextTexture);
-        ammoTextTexture = nullptr;
-    }
-
-    std::string ammoString = "Ammo: " + std::to_string(player.getAmmo()) +
-                             "/" + std::to_string(player.getMaxAmmo());
-
-    if (player.isReloading()) {
-        ammoString += " (Reloading)";
-    }
-
-    SDL_Color color = {255, 255, 255, 255};
-    SDL_Surface* textSurface = TTF_RenderText_Blended(uiFont, ammoString.c_str(), 0, color);
-    if (!textSurface) {
-        return false;
-    }
-
-    ammoTextTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    if (!ammoTextTexture) {
-        SDL_DestroySurface(textSurface);
-        return false;
-    }
-
-    ammoTextRect.w = static_cast<float>(textSurface->w);
-    ammoTextRect.h = static_cast<float>(textSurface->h);
-
-    SDL_DestroySurface(textSurface);
-    return true;
 }
