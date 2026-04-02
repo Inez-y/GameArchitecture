@@ -34,13 +34,7 @@ add_executable(LastCarriage src
         src/Game.h
         src/vendor/tinyxml2.h
         src/vendor/tinyxml2.cpp
-        src/Player.cpp
-        src/Player.h
         src/Camera.h
-        src/Enemy.cpp
-        src/Enemy.h
-        src/Item.cpp
-        src/Item.h
         src/Bullet.cpp
         src/Bullet.h
         src/DoorSpawn.cpp
@@ -63,6 +57,10 @@ add_executable(LastCarriage src
         src/components/EnemyAIComponent.h
         src/factories/EnemyFactory.cpp
         src/factories/EnemyFactory.h
+        src/components/ItemComponent.h
+        src/components/ItemTagComponent.h
+        src/factories/ItemFactory.cpp
+        src/factories/ItemFactory.h
 )
 
 target_link_libraries(LastCarriage

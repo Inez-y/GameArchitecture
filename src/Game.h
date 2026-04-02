@@ -13,7 +13,6 @@
 #include <iostream>
 
 #include "map/Map.h"
-#include "Item.h"
 #include "Bullet.h"
 #include "EnemyBullet.h"
 
@@ -21,6 +20,7 @@
 
 #include "factories/PlayerFactory.h"
 #include "factories/EnemyFactory.h"
+#include "factories/ItemFactory.h"
 
 #include "components/PlayerTagComponent.h"
 #include "components/EnemyTagComponent.h"
@@ -31,6 +31,8 @@
 #include "components/WeaponComponent.h"
 #include "components/InputComponent.h"
 #include "components/EnemyAIComponent.h"
+#include "components/ItemComponent.h"
+#include "components/ItemTagComponent.h"
 
 struct Camera {
     float x = 0.0f;
@@ -57,6 +59,8 @@ private:
 
     bool updateHPText();
     bool updateAmmoText();
+
+    void applyItemEffect(ItemType type);
 
 private:
     SDL_Window* window;
@@ -90,7 +94,6 @@ private:
     Entity* playerEntity;
 
     // Non-ECS for now
-    std::vector<Item> items;
     std::vector<Bullet> bullets;
     std::vector<EnemyBullet> enemyBullets;
 };

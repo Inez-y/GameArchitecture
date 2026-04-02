@@ -76,22 +76,6 @@ bool Game::init(const char* title, int width, int height) {
         return false;
     }
 
-    std::cout << "Map loaded successfully.\n";
-    std::cout << "Map size: " << map.getWidth() << " x " << map.getHeight() << std::endl;
-    std::cout << "Tile size: " << map.getTileWidth() << " x " << map.getTileHeight() << std::endl;
-    std::cout << "Item spawn count: " << map.getItemSpawns().size() << std::endl;
-    std::cout << "Collider count: " << map.getColliders().size() << std::endl;
-    std::cout << "Door count: " << map.getDoors().size() << std::endl;
-
-    for (const DoorSpawn& door : map.getDoors()) {
-        std::cout << "Door: x=" << door.x
-                  << " y=" << door.y
-                  << " w=" << door.w
-                  << " h=" << door.h
-                  << " target=" << door.targetMap
-                  << std::endl;
-    }
-
     lastCounter = SDL_GetTicks();
     isRunning = true;
     return true;
@@ -139,7 +123,7 @@ void Game::handleEvents() {
 
                 weapon.consumeAmmo();
                 shootTimer = shootCooldown;
-                }
+            }
         }
     }
 
@@ -172,7 +156,7 @@ void Game::update() {
     float mapPixelWidth = static_cast<float>(map.getWidth() * map.getTileWidth());
     float mapPixelHeight = static_cast<float>(map.getHeight() * map.getTileHeight());
 
-    // Update player ECS components
+    // Update player ECS
     playerPhysics.update(deltaTime, map);
     playerWeapon.update(deltaTime);
 
@@ -199,6 +183,7 @@ void Game::update() {
             case EnemyType::Patrol:
                 switch (ai.state) {
                     case EnemyState::Idle:
+                        physics.setMoveX(0.0f);
                         if (ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y) <= ai.attackRange) {
                             ai.changeState(EnemyState::Attack);
                         } else if (ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y) <= ai.chaseRange) {
@@ -209,7 +194,6 @@ void Game::update() {
                                 ai.changeState(EnemyState::Patrol);
                             }
                         }
-                        physics.setMoveX(0.0f);
                         break;
 
                     case EnemyState::Patrol:
@@ -485,7 +469,7 @@ void Game::update() {
         }
     }
 
-    // Spawn enemy bullets from ECS enemies
+    // Spawn enemy bullets
     for (auto& e : manager.getEntities()) {
         if (!e->hasComponent<EnemyTagComponent>()) {
             continue;
@@ -495,11 +479,7 @@ void Game::update() {
         auto& ai = e->getComponent<EnemyAIComponent>();
         auto& health = e->getComponent<HealthComponent>();
 
-        if (health.isDead()) {
-            continue;
-        }
-
-        if (!ai.shotThisFrame) {
+        if (health.isDead() || !ai.shotThisFrame) {
             continue;
         }
 
@@ -515,7 +495,6 @@ void Game::update() {
         ai.resetShotThisFrame();
     }
 
-    // Update enemy bullets
     for (EnemyBullet& bullet : enemyBullets) {
         bullet.update(deltaTime);
 
@@ -525,7 +504,7 @@ void Game::update() {
         }
     }
 
-    // Camera follow
+    // Camera
     camera.x = playerTransform.x + playerTransform.w / 2.0f - camera.w / 2.0f;
     camera.y = playerTransform.y + playerTransform.h / 2.0f - camera.h / 2.0f;
 
@@ -545,7 +524,7 @@ void Game::update() {
 
     SDL_FRect playerBounds{playerTransform.x, playerTransform.y, playerTransform.w, playerTransform.h};
 
-    // Enemy melee/contact damage from ECS enemies
+    // Enemy melee/contact damage
     for (auto& e : manager.getEntities()) {
         if (!e->hasComponent<EnemyTagComponent>()) {
             continue;
@@ -555,11 +534,7 @@ void Game::update() {
         auto& ai = e->getComponent<EnemyAIComponent>();
         auto& health = e->getComponent<HealthComponent>();
 
-        if (health.isDead()) {
-            continue;
-        }
-
-        if (!ai.attackHitThisFrame) {
+        if (health.isDead() || !ai.attackHitThisFrame) {
             continue;
         }
 
@@ -579,7 +554,7 @@ void Game::update() {
         ai.resetAttackHit();
     }
 
-    // Player bullets hit ECS enemies
+    // Player bullets
     for (Bullet& bullet : bullets) {
         bullet.update(deltaTime);
 
@@ -632,13 +607,20 @@ void Game::update() {
         }
     }
 
-    // Item pickup
-    for (Item& item : items) {
+    // Item pickup ONLY
+    for (auto& e : manager.getEntities()) {
+        if (!e->hasComponent<ItemTagComponent>()) {
+            continue;
+        }
+
+        auto& transform = e->getComponent<TransformComponent>();
+        auto& item = e->getComponent<ItemComponent>();
+
         if (!item.isActive()) {
             continue;
         }
 
-        SDL_FRect itemBounds = item.getBounds();
+        SDL_FRect itemBounds = transform.getRect();
 
         bool overlaps =
             playerBounds.x < itemBounds.x + itemBounds.w &&
@@ -647,18 +629,13 @@ void Game::update() {
             playerBounds.y + playerBounds.h > itemBounds.y;
 
         if (overlaps) {
-            if (item.getType() == ItemType::Coin) {
-                coinCount++;
-                std::cout << "Picked up coin. Coins: " << coinCount << std::endl;
-            }
-            else if (item.getType() == ItemType::Health) {
-                playerHealth.heal(1);
-                std::cout << "Picked up health. HP: " << playerHealth.getHP() << std::endl;
-            }
-
+            applyItemEffect(item.getType());
             item.pickUp();
+            e->destroy();
         }
     }
+
+    manager.refresh();
 
     // Door transition
     for (const DoorSpawn& door : map.getDoors()) {
@@ -682,7 +659,7 @@ void Game::update() {
         }
     }
 
-    // Enemy bullets damage player
+    // Enemy bullets hit player
     for (EnemyBullet& bullet : enemyBullets) {
         if (!bullet.isActive()) {
             continue;
@@ -812,11 +789,21 @@ void Game::render() {
         SDL_RenderTexture(renderer, doorTexture, nullptr, &dstRect);
     }
 
-    for (Item& item : items) {
-        item.render(renderer, camRect);
+    // Items
+    for (auto& e : manager.getEntities()) {
+        if (!e->hasComponent<ItemTagComponent>()) {
+            continue;
+        }
+
+        auto& item = e->getComponent<ItemComponent>();
+        if (!item.isActive()) {
+            continue;
+        }
+
+        e->getComponent<SpriteComponent>().draw(camRect);
     }
 
-    // ECS enemies
+    // Enemies
     for (auto& e : manager.getEntities()) {
         if (!e->hasComponent<EnemyTagComponent>()) {
             continue;
@@ -852,21 +839,15 @@ void Game::render() {
 }
 
 bool Game::loadStage(const char* mapPath) {
-    // Remove old non-player ECS entities
     for (auto& e : manager.getEntities()) {
         if (!e->hasComponent<PlayerTagComponent>()) {
             e->destroy();
         }
     }
+
     manager.refresh();
 
     enemyBullets.clear();
-
-    for (Item& item : items) {
-        item.clean();
-    }
-    items.clear();
-
     bullets.clear();
 
     if (!map.load(mapPath)) {
@@ -874,7 +855,6 @@ bool Game::loadStage(const char* mapPath) {
         return false;
     }
 
-    // Create player once, otherwise reposition
     if (!playerEntity) {
         playerEntity = &manager.addEntity();
 
@@ -899,7 +879,7 @@ bool Game::loadStage(const char* mapPath) {
         }
     }
 
-    // Spawn ECS enemies
+    // Spawn enemies once
     const std::vector<EnemySpawn>& enemySpawns = map.getEnemySpawns();
     for (const EnemySpawn& spawn : enemySpawns) {
         Entity& enemy = manager.addEntity();
@@ -916,22 +896,12 @@ bool Game::loadStage(const char* mapPath) {
                                   patrolRight);
     }
 
-    // Items still non-ECS for now
+    // Spawn items once
     const std::vector<ItemSpawn>& itemSpawns = map.getItemSpawns();
     for (const ItemSpawn& spawn : itemSpawns) {
-        ItemType type = stringToItemType(spawn.type);
-
-        items.emplace_back();
-
-        if (!items.back().init(renderer, itemTexturePath(type), spawn.x, spawn.y, type)) {
-            std::cout << "Failed to initialize one item.\n";
-            items.pop_back();
-        }
+        Entity& item = manager.addEntity();
+        ItemFactory::createItem(item, renderer, spawn.type, spawn.x, spawn.y);
     }
-
-    std::cout << "Loaded stage: " << mapPath << std::endl;
-    std::cout << "Enemies spawned: " << enemySpawns.size() << std::endl;
-    std::cout << "Items spawned: " << items.size() << std::endl;
 
     return true;
 }
@@ -960,11 +930,6 @@ void Game::clean() {
     enemyBullets.clear();
     bullets.clear();
 
-    for (Item& item : items) {
-        item.clean();
-    }
-    items.clear();
-
     playerEntity = nullptr;
 
     if (uiFont) {
@@ -985,4 +950,28 @@ void Game::clean() {
     }
 
     SDL_Quit();
+}
+
+void Game::applyItemEffect(ItemType type) {
+    if (!playerEntity) {
+        return;
+    }
+
+    auto& playerHealth = playerEntity->getComponent<HealthComponent>();
+
+    switch (type) {
+        case ItemType::Coin:
+            coinCount++;
+            std::cout << "Picked up coin. Coins: " << coinCount << std::endl;
+            break;
+
+        case ItemType::Health:
+            playerHealth.heal(1);
+            std::cout << "Picked up health. HP: " << playerHealth.getHP() << std::endl;
+            break;
+
+        case ItemType::Key:
+            std::cout << "Picked up key.\n";
+            break;
+    }
 }
