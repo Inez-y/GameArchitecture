@@ -26,6 +26,13 @@ public:
         x = newX;
         y = newY;
     }
-};
 
+    float getCenterX() const {
+        return x + w * 0.5f;
+    }
+
+    float getCenterY() const {
+        return y + h * 0.5f;
+    }
+};
 #endif //LASTCARRIAGE_TRANSFROMCOMPONENT_H

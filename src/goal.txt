@@ -1,0 +1,34 @@
+src/
+├── main.cpp
+├── Game.cpp
+├── Game.h
+├── ecs/
+│   ├── Entity.h
+│   ├── Component.h
+│   ├── Manager.h
+│   └── Ecs.h
+├── components/
+│   ├── TransformComponent.h
+│   ├── SpriteComponent.h
+│   ├── InputComponent.h
+│   ├── ColliderComponent.h
+│   ├── HealthComponent.h
+│   ├── BulletComponent.h
+│   ├── EnemyAIComponent.h
+│   ├── ItemComponent.h
+│   └── DoorComponent.h
+├── systems/
+│   ├── MovementSystem.h
+│   ├── RenderSystem.h
+│   ├── CollisionSystem.h
+│   ├── CombatSystem.h
+│   ├── ItemSystem.h
+│   └── StageSystem.h
+├── map/
+│   ├── Map.cpp
+│   └── Map.h
+├── ui/
+│   ├── Hud.cpp
+│   └── Hud.h
+└── utils/
+    └── ...

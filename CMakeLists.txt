@@ -59,6 +59,10 @@ add_executable(LastCarriage src
         src/factories/PlayerFactory.cpp
         src/factories/PlayerFactory.h
         src/components/PlayerTagComponent.h
+        src/components/EnemyTagComponent.h
+        src/components/EnemyAIComponent.h
+        src/factories/EnemyFactory.cpp
+        src/factories/EnemyFactory.h
 )
 
 target_link_libraries(LastCarriage

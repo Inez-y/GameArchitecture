@@ -13,21 +13,24 @@
 #include <iostream>
 
 #include "map/Map.h"
-#include "Enemy.h"
 #include "Item.h"
 #include "Bullet.h"
 #include "EnemyBullet.h"
 
 #include "ecs/Manager.h"
-#include "factories/PlayerFactory.h"
 
+#include "factories/PlayerFactory.h"
+#include "factories/EnemyFactory.h"
+
+#include "components/PlayerTagComponent.h"
+#include "components/EnemyTagComponent.h"
 #include "components/TransformComponent.h"
 #include "components/SpriteComponent.h"
 #include "components/PhysicsComponent.h"
 #include "components/HealthComponent.h"
 #include "components/WeaponComponent.h"
 #include "components/InputComponent.h"
-#include "components/PlayerTagComponent.h"
+#include "components/EnemyAIComponent.h"
 
 struct Camera {
     float x = 0.0f;
@@ -87,7 +90,6 @@ private:
     Entity* playerEntity;
 
     // Non-ECS for now
-    std::vector<Enemy> enemies;
     std::vector<Item> items;
     std::vector<Bullet> bullets;
     std::vector<EnemyBullet> enemyBullets;

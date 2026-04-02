@@ -139,7 +139,7 @@ void Game::handleEvents() {
 
                 weapon.consumeAmmo();
                 shootTimer = shootCooldown;
-            }
+                }
         }
     }
 
@@ -152,10 +152,10 @@ void Game::update() {
         return;
     }
 
-    auto& transform = playerEntity->getComponent<TransformComponent>();
-    auto& physics = playerEntity->getComponent<PhysicsComponent>();
-    auto& health = playerEntity->getComponent<HealthComponent>();
-    auto& weapon = playerEntity->getComponent<WeaponComponent>();
+    auto& playerTransform = playerEntity->getComponent<TransformComponent>();
+    auto& playerPhysics = playerEntity->getComponent<PhysicsComponent>();
+    auto& playerHealth = playerEntity->getComponent<HealthComponent>();
+    auto& playerWeapon = playerEntity->getComponent<WeaponComponent>();
 
     Uint64 currentCounter = SDL_GetTicks();
     float deltaTime = (currentCounter - lastCounter) / 1000.0f;
@@ -172,36 +172,347 @@ void Game::update() {
     float mapPixelWidth = static_cast<float>(map.getWidth() * map.getTileWidth());
     float mapPixelHeight = static_cast<float>(map.getHeight() * map.getTileHeight());
 
-    physics.update(deltaTime, map);
-    weapon.update(deltaTime);
+    // Update player ECS components
+    playerPhysics.update(deltaTime, map);
+    playerWeapon.update(deltaTime);
 
-    // Update enemies
-    for (Enemy& enemy : enemies) {
-        enemy.update(deltaTime, transform.x, transform.y, map);
+    // --------------------
+    // UPDATE ECS ENEMIES
+    // --------------------
+    for (auto& e : manager.getEntities()) {
+        if (!e->hasComponent<EnemyTagComponent>()) {
+            continue;
+        }
+
+        auto& transform = e->getComponent<TransformComponent>();
+        auto& physics = e->getComponent<PhysicsComponent>();
+        auto& health = e->getComponent<HealthComponent>();
+        auto& ai = e->getComponent<EnemyAIComponent>();
+
+        ai.beginFrame();
+
+        if (health.isDead()) {
+            ai.changeState(EnemyState::Dead);
+        }
+
+        switch (ai.type) {
+            case EnemyType::Patrol:
+                switch (ai.state) {
+                    case EnemyState::Idle:
+                        if (ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y) <= ai.attackRange) {
+                            ai.changeState(EnemyState::Attack);
+                        } else if (ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y) <= ai.chaseRange) {
+                            ai.changeState(EnemyState::Chase);
+                        } else {
+                            ai.idleTimer += deltaTime;
+                            if (ai.idleTimer >= ai.idleDuration) {
+                                ai.changeState(EnemyState::Patrol);
+                            }
+                        }
+                        physics.setMoveX(0.0f);
+                        break;
+
+                    case EnemyState::Patrol:
+                        if (ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y) <= ai.attackRange) {
+                            ai.changeState(EnemyState::Attack);
+                        } else if (ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y) <= ai.chaseRange) {
+                            ai.changeState(EnemyState::Chase);
+                        } else {
+                            physics.setMoveX(static_cast<float>(ai.direction));
+
+                            if (transform.x <= ai.patrolLeft) {
+                                transform.x = ai.patrolLeft;
+                                ai.direction = 1;
+                                ai.changeState(EnemyState::Idle);
+                            } else if (transform.x >= ai.patrolRight) {
+                                transform.x = ai.patrolRight;
+                                ai.direction = -1;
+                                ai.changeState(EnemyState::Idle);
+                            }
+                        }
+                        break;
+
+                    case EnemyState::Chase:
+                        if (ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y) <= ai.attackRange) {
+                            ai.changeState(EnemyState::Attack);
+                        } else if (ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y) >= ai.stopChaseRange) {
+                            ai.changeState(EnemyState::Patrol);
+                        } else {
+                            ai.direction = (playerTransform.x < transform.x) ? -1 : 1;
+                            physics.setMoveX(static_cast<float>(ai.direction));
+                        }
+                        break;
+
+                    case EnemyState::Attack:
+                        physics.setMoveX(0.0f);
+                        ai.attackTimer += deltaTime;
+
+                        if (!ai.damageAppliedThisAttack && ai.attackTimer >= ai.attackDuration * 0.5f) {
+                            ai.damageAppliedThisAttack = true;
+                            ai.attackHitThisFrame = true;
+                        }
+
+                        if (ai.attackTimer >= ai.attackDuration) {
+                            float dist = ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y);
+                            if (dist <= ai.attackRange) ai.changeState(EnemyState::Attack);
+                            else if (dist <= ai.chaseRange) ai.changeState(EnemyState::Chase);
+                            else ai.changeState(EnemyState::Patrol);
+                        }
+                        break;
+
+                    case EnemyState::Hurt:
+                        physics.setMoveX(0.0f);
+                        ai.hurtTimer += deltaTime;
+                        if (ai.hurtTimer >= ai.hurtDuration) {
+                            if (health.isDead()) ai.changeState(EnemyState::Dead);
+                            else ai.changeState(EnemyState::Patrol);
+                        }
+                        break;
+
+                    case EnemyState::Dead:
+                        physics.setMoveX(0.0f);
+                        break;
+                }
+                break;
+
+            case EnemyType::Shooter:
+                switch (ai.state) {
+                    case EnemyState::Idle:
+                        physics.setMoveX(0.0f);
+                        if (ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y) <= ai.chaseRange) {
+                            ai.changeState(EnemyState::Attack);
+                        }
+                        break;
+
+                    case EnemyState::Attack:
+                        physics.setMoveX(0.0f);
+                        ai.direction = (playerTransform.x < transform.x) ? -1 : 1;
+                        ai.attackTimer += deltaTime;
+
+                        if (!ai.damageAppliedThisAttack && ai.attackTimer >= 0.5f) {
+                            ai.damageAppliedThisAttack = true;
+                            ai.shotThisFrame = true;
+                        }
+
+                        if (ai.attackTimer >= 1.0f) {
+                            ai.changeState(EnemyState::Idle);
+                        }
+                        break;
+
+                    case EnemyState::Hurt:
+                        physics.setMoveX(0.0f);
+                        ai.hurtTimer += deltaTime;
+                        if (ai.hurtTimer >= ai.hurtDuration) {
+                            if (health.isDead()) ai.changeState(EnemyState::Dead);
+                            else ai.changeState(EnemyState::Idle);
+                        }
+                        break;
+
+                    case EnemyState::Dead:
+                        physics.setMoveX(0.0f);
+                        break;
+
+                    default:
+                        ai.changeState(EnemyState::Idle);
+                        break;
+                }
+                break;
+
+            case EnemyType::Flying:
+                switch (ai.state) {
+                    case EnemyState::Chase: {
+                        float dx = playerTransform.x - transform.x;
+                        float dy = playerTransform.y - transform.y;
+
+                        ai.direction = (dx < 0.0f) ? -1 : 1;
+                        transform.x += ai.direction * physics.getSpeed() * deltaTime * 0.8f;
+
+                        if (dy < -10.0f) transform.y -= physics.getSpeed() * deltaTime * 0.5f;
+                        else if (dy > 10.0f) transform.y += physics.getSpeed() * deltaTime * 0.5f;
+
+                        if (ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y) <= ai.attackRange) {
+                            ai.changeState(EnemyState::Attack);
+                        }
+                        break;
+                    }
+
+                    case EnemyState::Attack: {
+                        float dx = playerTransform.x - transform.x;
+                        float dy = playerTransform.y - transform.y;
+
+                        ai.direction = (dx < 0.0f) ? -1 : 1;
+                        transform.x += ai.direction * physics.getSpeed() * deltaTime * 1.2f;
+
+                        if (dy < -10.0f) transform.y -= physics.getSpeed() * deltaTime * 0.8f;
+                        else if (dy > 10.0f) transform.y += physics.getSpeed() * deltaTime * 0.8f;
+
+                        ai.attackTimer += deltaTime;
+
+                        if (!ai.damageAppliedThisAttack && ai.attackTimer >= 0.3f) {
+                            ai.damageAppliedThisAttack = true;
+                            ai.attackHitThisFrame = true;
+                        }
+
+                        if (ai.attackTimer >= 0.7f) {
+                            ai.changeState(EnemyState::Chase);
+                        }
+                        break;
+                    }
+
+                    case EnemyState::Hurt:
+                        ai.hurtTimer += deltaTime;
+                        if (ai.hurtTimer >= ai.hurtDuration) {
+                            if (health.isDead()) ai.changeState(EnemyState::Dead);
+                            else ai.changeState(EnemyState::Chase);
+                        }
+                        break;
+
+                    case EnemyState::Dead:
+                        break;
+
+                    default:
+                        ai.changeState(EnemyState::Chase);
+                        break;
+                }
+                break;
+
+            case EnemyType::Boss:
+                switch (ai.state) {
+                    case EnemyState::Idle:
+                        physics.setMoveX(0.0f);
+                        ai.bossAttackTimer += deltaTime;
+
+                        if (ai.bossAttackTimer >= ai.bossAttackCooldown) {
+                            ai.bossAttackTimer = 0.0f;
+                            ai.bossAttackPhase = 0;
+
+                            float dist = ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y);
+                            if (dist > 350.0f) ai.currentBossAttack = BossAttackType::BurstShot;
+                            else ai.currentBossAttack = BossAttackType::DashAttack;
+
+                            ai.changeState(EnemyState::Attack);
+                        }
+                        break;
+
+                    case EnemyState::Attack:
+                        if (ai.currentBossAttack == BossAttackType::BurstShot) {
+                            physics.setMoveX(0.0f);
+                            ai.bossAttackTimer += deltaTime;
+                            ai.direction = (playerTransform.x < transform.x) ? -1 : 1;
+
+                            if (ai.bossAttackPhase == 0) {
+                                if (ai.bossAttackTimer >= 0.5f) {
+                                    ai.bossAttackTimer = 0.0f;
+                                    ai.bossAttackPhase = 1;
+                                }
+                            } else if (ai.bossAttackPhase == 1) {
+                                ai.shotThisFrame = true;
+                                ai.bossAttackTimer = 0.0f;
+                                ai.bossAttackPhase = 2;
+                            } else if (ai.bossAttackPhase == 2) {
+                                if (ai.bossAttackTimer >= 0.2f) {
+                                    ai.shotThisFrame = true;
+                                    ai.bossAttackTimer = 0.0f;
+                                    ai.bossAttackPhase = 3;
+                                }
+                            } else if (ai.bossAttackPhase == 3) {
+                                if (ai.bossAttackTimer >= 0.2f) {
+                                    ai.shotThisFrame = true;
+                                    ai.bossAttackTimer = 0.0f;
+                                    ai.bossAttackPhase = 4;
+                                }
+                            } else if (ai.bossAttackPhase == 4) {
+                                if (ai.bossAttackTimer >= 0.4f) {
+                                    ai.bossAttackTimer = 0.0f;
+                                    ai.currentBossAttack = BossAttackType::None;
+                                    ai.changeState(EnemyState::Idle);
+                                }
+                            }
+                        }
+                        else if (ai.currentBossAttack == BossAttackType::DashAttack) {
+                            ai.bossAttackTimer += deltaTime;
+                            ai.direction = (playerTransform.x < transform.x) ? -1 : 1;
+
+                            if (ai.bossAttackPhase == 0) {
+                                physics.setMoveX(0.0f);
+                                if (ai.bossAttackTimer >= 0.4f) {
+                                    ai.bossAttackTimer = 0.0f;
+                                    ai.bossAttackPhase = 1;
+                                }
+                            } else if (ai.bossAttackPhase == 1) {
+                                physics.setMoveX(static_cast<float>(ai.direction) * 3.0f);
+                                ai.attackHitThisFrame = true;
+
+                                if (ai.bossAttackTimer >= 0.5f) {
+                                    ai.bossAttackTimer = 0.0f;
+                                    ai.bossAttackPhase = 2;
+                                }
+                            } else if (ai.bossAttackPhase == 2) {
+                                physics.setMoveX(0.0f);
+                                if (ai.bossAttackTimer >= 0.5f) {
+                                    ai.bossAttackTimer = 0.0f;
+                                    ai.currentBossAttack = BossAttackType::None;
+                                    ai.changeState(EnemyState::Idle);
+                                }
+                            }
+                        }
+                        break;
+
+                    case EnemyState::Hurt:
+                        physics.setMoveX(0.0f);
+                        ai.hurtTimer += deltaTime;
+                        if (ai.hurtTimer >= ai.hurtDuration) {
+                            if (health.isDead()) ai.changeState(EnemyState::Dead);
+                            else ai.changeState(EnemyState::Idle);
+                        }
+                        break;
+
+                    case EnemyState::Dead:
+                        physics.setMoveX(0.0f);
+                        break;
+
+                    default:
+                        ai.changeState(EnemyState::Idle);
+                        break;
+                }
+                break;
+        }
+
+        physics.update(deltaTime, map);
+
+        if (health.isDead()) {
+            ai.changeState(EnemyState::Dead);
+        }
     }
 
-    // Spawn enemy bullets
-    for (Enemy& enemy : enemies) {
-        if (enemy.isDead()) {
+    // Spawn enemy bullets from ECS enemies
+    for (auto& e : manager.getEntities()) {
+        if (!e->hasComponent<EnemyTagComponent>()) {
             continue;
         }
 
-        if (!enemy.didShootThisFrame()) {
+        auto& transform = e->getComponent<TransformComponent>();
+        auto& ai = e->getComponent<EnemyAIComponent>();
+        auto& health = e->getComponent<HealthComponent>();
+
+        if (health.isDead()) {
             continue;
         }
 
-        SDL_FRect enemyBounds = enemy.getBounds();
+        if (!ai.shotThisFrame) {
+            continue;
+        }
 
         EnemyBullet bullet;
-        int dir = (transform.x < enemyBounds.x) ? -1 : 1;
+        int dir = (playerTransform.x < transform.x) ? -1 : 1;
 
-        float bulletX = enemyBounds.x + enemyBounds.w / 2.0f + dir * 20.0f;
-        float bulletY = enemyBounds.y + enemyBounds.h / 2.0f;
+        float bulletX = transform.x + transform.w / 2.0f + dir * 20.0f;
+        float bulletY = transform.y + transform.h / 2.0f;
 
         bullet.init(bulletX, bulletY, dir);
         enemyBullets.push_back(bullet);
 
-        enemy.resetShotThisFrame();
+        ai.resetShotThisFrame();
     }
 
     // Update enemy bullets
@@ -215,8 +526,8 @@ void Game::update() {
     }
 
     // Camera follow
-    camera.x = transform.x + transform.w / 2.0f - camera.w / 2.0f;
-    camera.y = transform.y + transform.h / 2.0f - camera.h / 2.0f;
+    camera.x = playerTransform.x + playerTransform.w / 2.0f - camera.w / 2.0f;
+    camera.y = playerTransform.y + playerTransform.h / 2.0f - camera.h / 2.0f;
 
     if (mapPixelWidth <= camera.w) {
         camera.x = 0.0f;
@@ -232,19 +543,27 @@ void Game::update() {
         if (camera.y > mapPixelHeight - camera.h) camera.y = mapPixelHeight - camera.h;
     }
 
-    SDL_FRect playerBounds{transform.x, transform.y, transform.w, transform.h};
+    SDL_FRect playerBounds{playerTransform.x, playerTransform.y, playerTransform.w, playerTransform.h};
 
-    // Enemy melee/contact damage
-    for (Enemy& enemy : enemies) {
-        if (enemy.isDead()) {
+    // Enemy melee/contact damage from ECS enemies
+    for (auto& e : manager.getEntities()) {
+        if (!e->hasComponent<EnemyTagComponent>()) {
             continue;
         }
 
-        if (!enemy.didAttackHit()) {
+        auto& transform = e->getComponent<TransformComponent>();
+        auto& ai = e->getComponent<EnemyAIComponent>();
+        auto& health = e->getComponent<HealthComponent>();
+
+        if (health.isDead()) {
             continue;
         }
 
-        SDL_FRect enemyBounds = enemy.getBounds();
+        if (!ai.attackHitThisFrame) {
+            continue;
+        }
+
+        SDL_FRect enemyBounds = transform.getRect();
 
         bool overlaps =
             playerBounds.x < enemyBounds.x + enemyBounds.w &&
@@ -253,14 +572,14 @@ void Game::update() {
             playerBounds.y + playerBounds.h > enemyBounds.y;
 
         if (overlaps) {
-            health.takeDamage(1);
-            std::cout << "Player took 1 damage. HP: " << health.getHP() << std::endl;
+            playerHealth.takeDamage(1);
+            std::cout << "Player took 1 damage. HP: " << playerHealth.getHP() << std::endl;
         }
 
-        enemy.resetAttackHit();
+        ai.resetAttackHit();
     }
 
-    // Update player bullets
+    // Player bullets hit ECS enemies
     for (Bullet& bullet : bullets) {
         bullet.update(deltaTime);
 
@@ -270,7 +589,6 @@ void Game::update() {
         }
     }
 
-    // Player bullets hit enemy
     for (Bullet& bullet : bullets) {
         if (!bullet.isActive()) {
             continue;
@@ -278,12 +596,20 @@ void Game::update() {
 
         SDL_FRect bulletBounds = bullet.getBounds();
 
-        for (Enemy& enemy : enemies) {
-            if (enemy.isDead()) {
+        for (auto& e : manager.getEntities()) {
+            if (!e->hasComponent<EnemyTagComponent>()) {
                 continue;
             }
 
-            SDL_FRect enemyBounds = enemy.getBounds();
+            auto& transform = e->getComponent<TransformComponent>();
+            auto& ai = e->getComponent<EnemyAIComponent>();
+            auto& health = e->getComponent<HealthComponent>();
+
+            if (health.isDead()) {
+                continue;
+            }
+
+            SDL_FRect enemyBounds = transform.getRect();
 
             bool overlaps =
                 bulletBounds.x < enemyBounds.x + enemyBounds.w &&
@@ -292,7 +618,14 @@ void Game::update() {
                 bulletBounds.y + bulletBounds.h > enemyBounds.y;
 
             if (overlaps) {
-                enemy.takeDamage(1);
+                health.takeDamage(1);
+
+                if (health.isDead()) {
+                    ai.changeState(EnemyState::Dead);
+                } else {
+                    ai.changeState(EnemyState::Hurt);
+                }
+
                 bullet.deactivate();
                 break;
             }
@@ -319,8 +652,8 @@ void Game::update() {
                 std::cout << "Picked up coin. Coins: " << coinCount << std::endl;
             }
             else if (item.getType() == ItemType::Health) {
-                health.heal(1);
-                std::cout << "Picked up health. HP: " << health.getHP() << std::endl;
+                playerHealth.heal(1);
+                std::cout << "Picked up health. HP: " << playerHealth.getHP() << std::endl;
             }
 
             item.pickUp();
@@ -364,9 +697,9 @@ void Game::update() {
             playerBounds.y + playerBounds.h > bulletBounds.y;
 
         if (overlaps) {
-            health.takeDamage(1);
+            playerHealth.takeDamage(1);
             bullet.deactivate();
-            std::cout << "Player hit by enemy bullet. HP: " << health.getHP() << std::endl;
+            std::cout << "Player hit by enemy bullet. HP: " << playerHealth.getHP() << std::endl;
         }
     }
 
@@ -483,8 +816,18 @@ void Game::render() {
         item.render(renderer, camRect);
     }
 
-    for (Enemy& enemy : enemies) {
-        enemy.render(renderer, camRect);
+    // ECS enemies
+    for (auto& e : manager.getEntities()) {
+        if (!e->hasComponent<EnemyTagComponent>()) {
+            continue;
+        }
+
+        auto& health = e->getComponent<HealthComponent>();
+        if (health.isDead()) {
+            continue;
+        }
+
+        e->getComponent<SpriteComponent>().draw(camRect);
     }
 
     for (EnemyBullet& bullet : enemyBullets) {
@@ -509,10 +852,14 @@ void Game::render() {
 }
 
 bool Game::loadStage(const char* mapPath) {
-    for (Enemy& enemy : enemies) {
-        enemy.clean();
+    // Remove old non-player ECS entities
+    for (auto& e : manager.getEntities()) {
+        if (!e->hasComponent<PlayerTagComponent>()) {
+            e->destroy();
+        }
     }
-    enemies.clear();
+    manager.refresh();
+
     enemyBullets.clear();
 
     for (Item& item : items) {
@@ -527,7 +874,7 @@ bool Game::loadStage(const char* mapPath) {
         return false;
     }
 
-    // Recreate player entity only once if needed
+    // Create player once, otherwise reposition
     if (!playerEntity) {
         playerEntity = &manager.addEntity();
 
@@ -541,8 +888,7 @@ bool Game::loadStage(const char* mapPath) {
         }
 
         PlayerFactory::createPlayer(*playerEntity, renderer, startX, startY);
-    }
-    else {
+    } else {
         auto& transform = playerEntity->getComponent<TransformComponent>();
 
         if (map.hasPlayerSpawn()) {
@@ -553,25 +899,24 @@ bool Game::loadStage(const char* mapPath) {
         }
     }
 
+    // Spawn ECS enemies
     const std::vector<EnemySpawn>& enemySpawns = map.getEnemySpawns();
     for (const EnemySpawn& spawn : enemySpawns) {
-        EnemyType type = stringToEnemyType(spawn.type);
-
-        enemies.emplace_back();
+        Entity& enemy = manager.addEntity();
 
         float patrolLeft = spawn.x - 100.0f;
         float patrolRight = spawn.x + 100.0f;
 
-        if (!enemies.back().init(renderer,
-                                 enemyTexturePath(type),
-                                 spawn.x, spawn.y,
-                                 patrolLeft, patrolRight,
-                                 type)) {
-            std::cout << "Failed to initialize one enemy.\n";
-            enemies.pop_back();
-        }
+        EnemyFactory::createEnemy(enemy,
+                                  renderer,
+                                  spawn.type,
+                                  spawn.x,
+                                  spawn.y,
+                                  patrolLeft,
+                                  patrolRight);
     }
 
+    // Items still non-ECS for now
     const std::vector<ItemSpawn>& itemSpawns = map.getItemSpawns();
     for (const ItemSpawn& spawn : itemSpawns) {
         ItemType type = stringToItemType(spawn.type);
@@ -585,7 +930,7 @@ bool Game::loadStage(const char* mapPath) {
     }
 
     std::cout << "Loaded stage: " << mapPath << std::endl;
-    std::cout << "Enemies spawned: " << enemies.size() << std::endl;
+    std::cout << "Enemies spawned: " << enemySpawns.size() << std::endl;
     std::cout << "Items spawned: " << items.size() << std::endl;
 
     return true;
@@ -611,11 +956,6 @@ void Game::clean() {
         SDL_DestroyTexture(hpTextTexture);
         hpTextTexture = nullptr;
     }
-
-    for (Enemy& enemy : enemies) {
-        enemy.clean();
-    }
-    enemies.clear();
 
     enemyBullets.clear();
     bullets.clear();

@@ -36,6 +36,10 @@ public:
         transform = &entity->getComponent<TransformComponent>();
     }
 
+    SDL_Texture* getTexture() const {
+        return texture;
+    }
+
     void draw(const SDL_FRect& camera) {
         if (!texture || !transform) {
             return;

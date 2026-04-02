@@ -14,4 +14,5 @@ public:
     virtual void draw() {}
     virtual ~Component() = default;
 };
+
 #endif //LASTCARRIAGE_COMPONENT_H

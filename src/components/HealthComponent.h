@@ -10,11 +10,31 @@ public:
     int hp;
     int maxHP;
 
-    HealthComponent(int maxHP = 10)
-        : hp(maxHP), maxHP(maxHP) {}
+    HealthComponent(int maxHealth = 10)
+        : hp(maxHealth), maxHP(maxHealth) {}
 
-    void takeDamage(int damage) {
-        hp -= damage;
+    int getHP() const {
+        return hp;
+    }
+
+    int getMaxHP() const {
+        return maxHP;
+    }
+
+    void setHP(int value) {
+        hp = value;
+        if (hp < 0) hp = 0;
+        if (hp > maxHP) hp = maxHP;
+    }
+
+    void setMaxHP(int value) {
+        maxHP = value;
+        if (maxHP < 1) maxHP = 1;
+        if (hp > maxHP) hp = maxHP;
+    }
+
+    void takeDamage(int amount) {
+        hp -= amount;
         if (hp < 0) {
             hp = 0;
         }
@@ -30,13 +50,6 @@ public:
     bool isDead() const {
         return hp <= 0;
     }
-
-    int getHP() const {
-        return hp;
-    }
-
-    int getMaxHP() const {
-        return maxHP;
-    }
 };
+
 #endif //LASTCARRIAGE_HEALTHCOMPONENT_H
