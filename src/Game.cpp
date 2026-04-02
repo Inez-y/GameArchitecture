@@ -54,7 +54,7 @@ bool Game::init(const char* title, int width, int height) {
     hpTextTexture = nullptr;
     hpTextRect = {20.0f, 20.0f, 0.0f, 0.0f};
 
-    tilesetTexture = IMG_LoadTexture(renderer, "../assets/tileset.png");
+    tilesetTexture = IMG_LoadTexture(renderer, "../assets/Maps/tileset.png");
     if (!tilesetTexture) {
         std::cout << "Failed to load tileset texture: " << SDL_GetError() << std::endl;
         SDL_DestroyRenderer(renderer);
@@ -80,7 +80,7 @@ bool Game::init(const char* title, int width, int height) {
     camera.w = static_cast<float>(width);
     camera.h = static_cast<float>(height);
 
-    if (!loadStage("../assets/map1_boss.tmx")) {
+    if (!loadStage("../assets/Maps/map1_boss.tmx")) {
         return false;
     }
 

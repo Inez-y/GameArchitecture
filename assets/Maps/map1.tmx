@@ -62,6 +62,6 @@
   <object id="9" x="10.8108" y="370.27" width="862.162" height="89.1892"/>
  </objectgroup>
   <objectgroup id="100" name="Door Layer">
-   <object id="100" x="1000" y="600" name="../assets/map1_boss.tmx"/>
+   <object id="100" x="1000" y="600" name="../assets/Maps/map1_boss.tmx"/>
   </objectgroup>
 </map>

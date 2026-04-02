@@ -32,8 +32,8 @@ add_executable(LastCarriage src
         src/Map.cpp
         src/Game.cpp
         src/Game.h
-        assets/tinyxml2.h
-        assets/tinyxml2.cpp
+        src/vendor/tinyxml2.h
+        src/vendor/tinyxml2.cpp
         src/Player.cpp
         src/Player.h
         src/Camera.h
