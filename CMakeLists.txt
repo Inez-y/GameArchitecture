@@ -35,8 +35,6 @@ add_executable(LastCarriage src
         src/vendor/tinyxml2.h
         src/vendor/tinyxml2.cpp
         src/Camera.h
-        src/DoorSpawn.cpp
-        src/DoorSpawn.h
         src/ecs/Component.h
         src/ecs/Entity.h
         src/ecs/Manager.h
@@ -61,6 +59,10 @@ add_executable(LastCarriage src
         src/components/BulletTagComponent.h
         src/factories/BulletFactory.cpp
         src/factories/BulletFactory.h
+        src/components/DoorComponent.h
+        src/components/DoorTagComponent.h
+        src/factories/DoorFactory.cpp
+        src/factories/DoorFactory.h
 )
 
 target_link_libraries(LastCarriage

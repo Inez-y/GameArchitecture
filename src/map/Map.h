@@ -4,8 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "../DoorSpawn.h"
-
 // Items
 struct SpawnPoint {
     float x;
@@ -24,7 +22,7 @@ struct EnemySpawn {
     std::string type;
 };
 
-struct DoorSpaw {
+struct DoorSpawn {
     float x;
     float y;
     float w;

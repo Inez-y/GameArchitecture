@@ -20,6 +20,7 @@
 #include "factories/EnemyFactory.h"
 #include "factories/ItemFactory.h"
 #include "factories/BulletFactory.h"
+#include "factories/DoorFactory.h"
 
 #include "components/PlayerTagComponent.h"
 #include "components/EnemyTagComponent.h"
@@ -34,6 +35,8 @@
 #include "components/ItemTagComponent.h"
 #include "components/BulletTagComponent.h"
 #include "components/BulletComponent.h"
+#include "components/DoorTagComponent.h"
+#include "components/DoorComponent.h"
 
 struct Camera {
     float x = 0.0f;
@@ -64,7 +67,7 @@ private:
     void update();
     void render();
 
-    bool loadStage(const char* mapPath);
+    bool loadStage(const std::string& mapPath);
 
     bool updateHPText();
     bool updateAmmoText();

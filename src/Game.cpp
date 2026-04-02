@@ -650,8 +650,19 @@ void Game::update() {
     manager.refresh();
 
     // Doors
-    for (const DoorSpawn& door : map.getDoors()) {
-        SDL_FRect doorRect{door.x, door.y, door.w, door.h};
+    for (auto& e : manager.getEntities()) {
+        if (!e->hasComponent<DoorTagComponent>()) {
+            continue;
+        }
+
+        auto& transform = e->getComponent<TransformComponent>();
+        auto& door = e->getComponent<DoorComponent>();
+
+        if (!door.isActive()) {
+            continue;
+        }
+
+        SDL_FRect doorRect = transform.getRect();
 
         bool overlaps =
             playerBounds.x < doorRect.x + doorRect.w &&
@@ -659,17 +670,30 @@ void Game::update() {
             playerBounds.y < doorRect.y + doorRect.h &&
             playerBounds.y + playerBounds.h > doorRect.y;
 
-        if (overlaps) {
-            std::cout << "Player stepped on door! Target map: " << door.targetMap << std::endl;
-        }
+        if (overlaps && doorTimer <= 0.0f && !door.getTargetMap().empty()) {
+            std::string nextMap = door.getTargetMap();
+            if (nextMap != door.targetMap) {
+                std::cout << "No next map exists!" << std::endl;
+            }
 
-        if (overlaps && doorTimer <= 0.0f && !door.targetMap.empty()) {
-            if (loadStage(door.targetMap.c_str())) {
+            if (loadStage(nextMap.c_str())) {
                 doorTimer = doorCooldown;
             }
             break;
         }
     }
+
+    // const std::vector<DoorSpawn>& doorSpawns = map.getDoors();
+    // for (const DoorSpawn& door : doorSpawns) {
+    //     Entity& doorEntity = manager.addEntity();
+    //     DoorFactory::createDoor(doorEntity,
+    //                             renderer,
+    //                             door.x,
+    //                             door.y,
+    //                             door.w,
+    //                             door.h,
+    //                             door.targetMap);
+    // }
 }
 
 bool Game::updateHPText() {
@@ -760,13 +784,24 @@ void Game::render() {
 
     map.render(renderer, tilesetTexture, camRect);
 
-    for (const DoorSpawn& door : map.getDoors()) {
-        SDL_FRect dstRect;
-        dstRect.x = door.x - camera.x;
-        dstRect.y = door.y - camera.y;
-        dstRect.w = door.w;
-        dstRect.h = door.h;
-        SDL_RenderTexture(renderer, doorTexture, nullptr, &dstRect);
+    for (auto& e : manager.getEntities()) {
+        if (!e->hasComponent<DoorTagComponent>()) {
+            continue;
+        }
+
+        auto& door = e->getComponent<DoorComponent>();
+        auto& transform = e->getComponent<TransformComponent>();
+
+        if (!door.isActive()) {
+            continue;
+        }
+
+        SDL_FRect rect = transform.getRect();
+        rect.x -= camera.x;
+        rect.y -= camera.y;
+
+        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+        SDL_RenderFillRect(renderer, &rect);
     }
 
     for (auto& e : manager.getEntities()) {
@@ -825,7 +860,7 @@ void Game::render() {
     SDL_RenderPresent(renderer);
 }
 
-bool Game::loadStage(const char* mapPath) {
+bool Game::loadStage(const std::string& mapPath) {
     for (auto& e : manager.getEntities()) {
         if (!e->hasComponent<PlayerTagComponent>()) {
             e->destroy();
@@ -835,9 +870,23 @@ bool Game::loadStage(const char* mapPath) {
     manager.refresh();
     pendingBulletSpawns.clear();
 
-    if (!map.load(mapPath)) {
+    if (!map.load(mapPath.c_str())) {
         std::cout << "Failed to load map: " << mapPath << std::endl;
         return false;
+    }
+
+    // Doors
+    const std::vector<DoorSpawn>& doorSpawns = map.getDoors();
+    for (const DoorSpawn& door : doorSpawns) {
+        std::cout << "Door spawned to: " << door.targetMap << std::endl;
+        Entity& doorEntity = manager.addEntity();
+        DoorFactory::createDoor(doorEntity,
+                                renderer,
+                                door.x,
+                                door.y,
+                                door.w,
+                                door.h,
+                                door.targetMap);
     }
 
     if (!playerEntity) {
