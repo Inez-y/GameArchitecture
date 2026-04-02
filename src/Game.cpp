@@ -113,13 +113,13 @@ void Game::handleEvents() {
             if (event.key.scancode == SDL_SCANCODE_SPACE &&
                 shootTimer <= 0.0f &&
                 weapon.canShoot()) {
-                Bullet bullet;
 
-                float bulletX = transform.x + transform.w / 2.0f;
-                float bulletY = transform.y + transform.h / 2.0f;
-
-                bullet.init(bulletX, bulletY, weapon.getFacingDirection());
-                bullets.push_back(bullet);
+                pendingBulletSpawns.push_back({
+                    BulletOwner::Player,
+                    transform.x + transform.w * 0.5f,
+                    transform.y + transform.h * 0.5f,
+                    weapon.getFacingDirection()
+                });
 
                 weapon.consumeAmmo();
                 shootTimer = shootCooldown;
@@ -153,16 +153,14 @@ void Game::update() {
         doorTimer -= deltaTime;
     }
 
-    float mapPixelWidth = static_cast<float>(map.getWidth() * map.getTileWidth());
-    float mapPixelHeight = static_cast<float>(map.getHeight() * map.getTileHeight());
+    const float mapPixelWidth = static_cast<float>(map.getWidth() * map.getTileWidth());
+    const float mapPixelHeight = static_cast<float>(map.getHeight() * map.getTileHeight());
 
-    // Update player ECS
+    // Player
     playerPhysics.update(deltaTime, map);
     playerWeapon.update(deltaTime);
 
-    // --------------------
-    // UPDATE ECS ENEMIES
-    // --------------------
+    // Enemies
     for (auto& e : manager.getEntities()) {
         if (!e->hasComponent<EnemyTagComponent>()) {
             continue;
@@ -203,7 +201,6 @@ void Game::update() {
                             ai.changeState(EnemyState::Chase);
                         } else {
                             physics.setMoveX(static_cast<float>(ai.direction));
-
                             if (transform.x <= ai.patrolLeft) {
                                 transform.x = ai.patrolLeft;
                                 ai.direction = 1;
@@ -230,12 +227,10 @@ void Game::update() {
                     case EnemyState::Attack:
                         physics.setMoveX(0.0f);
                         ai.attackTimer += deltaTime;
-
                         if (!ai.damageAppliedThisAttack && ai.attackTimer >= ai.attackDuration * 0.5f) {
                             ai.damageAppliedThisAttack = true;
                             ai.attackHitThisFrame = true;
                         }
-
                         if (ai.attackTimer >= ai.attackDuration) {
                             float dist = ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y);
                             if (dist <= ai.attackRange) ai.changeState(EnemyState::Attack);
@@ -272,12 +267,10 @@ void Game::update() {
                         physics.setMoveX(0.0f);
                         ai.direction = (playerTransform.x < transform.x) ? -1 : 1;
                         ai.attackTimer += deltaTime;
-
                         if (!ai.damageAppliedThisAttack && ai.attackTimer >= 0.5f) {
                             ai.damageAppliedThisAttack = true;
                             ai.shotThisFrame = true;
                         }
-
                         if (ai.attackTimer >= 1.0f) {
                             ai.changeState(EnemyState::Idle);
                         }
@@ -307,10 +300,8 @@ void Game::update() {
                     case EnemyState::Chase: {
                         float dx = playerTransform.x - transform.x;
                         float dy = playerTransform.y - transform.y;
-
                         ai.direction = (dx < 0.0f) ? -1 : 1;
                         transform.x += ai.direction * physics.getSpeed() * deltaTime * 0.8f;
-
                         if (dy < -10.0f) transform.y -= physics.getSpeed() * deltaTime * 0.5f;
                         else if (dy > 10.0f) transform.y += physics.getSpeed() * deltaTime * 0.5f;
 
@@ -323,20 +314,16 @@ void Game::update() {
                     case EnemyState::Attack: {
                         float dx = playerTransform.x - transform.x;
                         float dy = playerTransform.y - transform.y;
-
                         ai.direction = (dx < 0.0f) ? -1 : 1;
                         transform.x += ai.direction * physics.getSpeed() * deltaTime * 1.2f;
-
                         if (dy < -10.0f) transform.y -= physics.getSpeed() * deltaTime * 0.8f;
                         else if (dy > 10.0f) transform.y += physics.getSpeed() * deltaTime * 0.8f;
 
                         ai.attackTimer += deltaTime;
-
                         if (!ai.damageAppliedThisAttack && ai.attackTimer >= 0.3f) {
                             ai.damageAppliedThisAttack = true;
                             ai.attackHitThisFrame = true;
                         }
-
                         if (ai.attackTimer >= 0.7f) {
                             ai.changeState(EnemyState::Chase);
                         }
@@ -365,15 +352,11 @@ void Game::update() {
                     case EnemyState::Idle:
                         physics.setMoveX(0.0f);
                         ai.bossAttackTimer += deltaTime;
-
                         if (ai.bossAttackTimer >= ai.bossAttackCooldown) {
                             ai.bossAttackTimer = 0.0f;
                             ai.bossAttackPhase = 0;
-
                             float dist = ai.distanceTo(transform.x, transform.y, playerTransform.x, playerTransform.y);
-                            if (dist > 350.0f) ai.currentBossAttack = BossAttackType::BurstShot;
-                            else ai.currentBossAttack = BossAttackType::DashAttack;
-
+                            ai.currentBossAttack = (dist > 350.0f) ? BossAttackType::BurstShot : BossAttackType::DashAttack;
                             ai.changeState(EnemyState::Attack);
                         }
                         break;
@@ -412,8 +395,7 @@ void Game::update() {
                                     ai.changeState(EnemyState::Idle);
                                 }
                             }
-                        }
-                        else if (ai.currentBossAttack == BossAttackType::DashAttack) {
+                        } else if (ai.currentBossAttack == BossAttackType::DashAttack) {
                             ai.bossAttackTimer += deltaTime;
                             ai.direction = (playerTransform.x < transform.x) ? -1 : 1;
 
@@ -426,7 +408,6 @@ void Game::update() {
                             } else if (ai.bossAttackPhase == 1) {
                                 physics.setMoveX(static_cast<float>(ai.direction) * 3.0f);
                                 ai.attackHitThisFrame = true;
-
                                 if (ai.bossAttackTimer >= 0.5f) {
                                     ai.bossAttackTimer = 0.0f;
                                     ai.bossAttackPhase = 2;
@@ -469,7 +450,7 @@ void Game::update() {
         }
     }
 
-    // Spawn enemy bullets
+    // Queue enemy bullet spawns, do not add entities during enemy iteration
     for (auto& e : manager.getEntities()) {
         if (!e->hasComponent<EnemyTagComponent>()) {
             continue;
@@ -483,46 +464,130 @@ void Game::update() {
             continue;
         }
 
-        EnemyBullet bullet;
         int dir = (playerTransform.x < transform.x) ? -1 : 1;
 
-        float bulletX = transform.x + transform.w / 2.0f + dir * 20.0f;
-        float bulletY = transform.y + transform.h / 2.0f;
-
-        bullet.init(bulletX, bulletY, dir);
-        enemyBullets.push_back(bullet);
+        pendingBulletSpawns.push_back({
+            BulletOwner::Enemy,
+            transform.x + transform.w * 0.5f + dir * 20.0f,
+            transform.y + transform.h * 0.5f,
+            dir
+        });
 
         ai.resetShotThisFrame();
     }
 
-    for (EnemyBullet& bullet : enemyBullets) {
-        bullet.update(deltaTime);
+    // Create all queued bullets after loops
+    for (const auto& spawn : pendingBulletSpawns) {
+        Entity& bullet = manager.addEntity();
+        BulletFactory::createBullet(bullet, renderer, spawn.owner, spawn.x, spawn.y, spawn.dir);
+    }
+    pendingBulletSpawns.clear();
 
-        SDL_FRect bounds = bullet.getBounds();
-        if (bounds.x < 0.0f || bounds.x > mapPixelWidth) {
+    // Update bullets
+    for (auto& e : manager.getEntities()) {
+        if (!e->hasComponent<BulletTagComponent>()) {
+            continue;
+        }
+
+        auto& transform = e->getComponent<TransformComponent>();
+        auto& bullet = e->getComponent<BulletComponent>();
+
+        if (!bullet.isActive()) {
+            continue;
+        }
+
+        transform.x += bullet.getDirection() * bullet.getSpeed() * deltaTime;
+
+        if (transform.x < 0.0f || transform.x > mapPixelWidth) {
             bullet.deactivate();
+            e->destroy();
+        }
+    }
+
+    SDL_FRect playerBounds = playerTransform.getRect();
+
+    // Bullet collisions
+    for (auto& bulletEntity : manager.getEntities()) {
+        if (!bulletEntity->hasComponent<BulletTagComponent>()) {
+            continue;
+        }
+
+        auto& bulletTransform = bulletEntity->getComponent<TransformComponent>();
+        auto& bullet = bulletEntity->getComponent<BulletComponent>();
+
+        if (!bullet.isActive()) {
+            continue;
+        }
+
+        SDL_FRect bulletBounds = bulletTransform.getRect();
+
+        if (bullet.getOwner() == BulletOwner::Player) {
+            for (auto& enemyEntity : manager.getEntities()) {
+                if (!enemyEntity->hasComponent<EnemyTagComponent>()) {
+                    continue;
+                }
+
+                auto& enemyTransform = enemyEntity->getComponent<TransformComponent>();
+                auto& enemyHealth = enemyEntity->getComponent<HealthComponent>();
+                auto& enemyAI = enemyEntity->getComponent<EnemyAIComponent>();
+
+                if (enemyHealth.isDead()) {
+                    continue;
+                }
+
+                SDL_FRect enemyBounds = enemyTransform.getRect();
+
+                bool overlaps =
+                    bulletBounds.x < enemyBounds.x + enemyBounds.w &&
+                    bulletBounds.x + bulletBounds.w > enemyBounds.x &&
+                    bulletBounds.y < enemyBounds.y + enemyBounds.h &&
+                    bulletBounds.y + bulletBounds.h > enemyBounds.y;
+
+                if (overlaps) {
+                    enemyHealth.takeDamage(bullet.getDamage());
+
+                    if (enemyHealth.isDead()) {
+                        enemyAI.changeState(EnemyState::Dead);
+                    } else {
+                        enemyAI.changeState(EnemyState::Hurt);
+                    }
+
+                    bullet.deactivate();
+                    bulletEntity->destroy();
+                    break;
+                }
+            }
+        } else {
+            bool overlaps =
+                playerBounds.x < bulletBounds.x + bulletBounds.w &&
+                playerBounds.x + playerBounds.w > bulletBounds.x &&
+                playerBounds.y < bulletBounds.y + bulletBounds.h &&
+                playerBounds.y + playerBounds.h > bulletBounds.y;
+
+            if (overlaps) {
+                playerHealth.takeDamage(bullet.getDamage());
+                bullet.deactivate();
+                bulletEntity->destroy();
+                std::cout << "Player hit by enemy bullet. HP: " << playerHealth.getHP() << std::endl;
+            }
         }
     }
 
     // Camera
-    camera.x = playerTransform.x + playerTransform.w / 2.0f - camera.w / 2.0f;
-    camera.y = playerTransform.y + playerTransform.h / 2.0f - camera.h / 2.0f;
+    camera.x = playerTransform.x + playerTransform.w * 0.5f - camera.w * 0.5f;
+    camera.y = playerTransform.y + playerTransform.h * 0.5f - camera.h * 0.5f;
 
-    if (mapPixelWidth <= camera.w) {
-        camera.x = 0.0f;
-    } else {
+    if (mapPixelWidth <= camera.w) camera.x = 0.0f;
+    else {
         if (camera.x < 0.0f) camera.x = 0.0f;
         if (camera.x > mapPixelWidth - camera.w) camera.x = mapPixelWidth - camera.w;
     }
 
-    if (mapPixelHeight <= camera.h) {
-        camera.y = 0.0f;
-    } else {
+    if (mapPixelHeight <= camera.h) camera.y = 0.0f;
+    else {
         if (camera.y < 0.0f) camera.y = 0.0f;
         if (camera.y > mapPixelHeight - camera.h) camera.y = mapPixelHeight - camera.h;
     }
-
-    SDL_FRect playerBounds{playerTransform.x, playerTransform.y, playerTransform.w, playerTransform.h};
 
     // Enemy melee/contact damage
     for (auto& e : manager.getEntities()) {
@@ -554,60 +619,7 @@ void Game::update() {
         ai.resetAttackHit();
     }
 
-    // Player bullets
-    for (Bullet& bullet : bullets) {
-        bullet.update(deltaTime);
-
-        SDL_FRect bulletBounds = bullet.getBounds();
-        if (bulletBounds.x < 0.0f || bulletBounds.x > mapPixelWidth) {
-            bullet.deactivate();
-        }
-    }
-
-    for (Bullet& bullet : bullets) {
-        if (!bullet.isActive()) {
-            continue;
-        }
-
-        SDL_FRect bulletBounds = bullet.getBounds();
-
-        for (auto& e : manager.getEntities()) {
-            if (!e->hasComponent<EnemyTagComponent>()) {
-                continue;
-            }
-
-            auto& transform = e->getComponent<TransformComponent>();
-            auto& ai = e->getComponent<EnemyAIComponent>();
-            auto& health = e->getComponent<HealthComponent>();
-
-            if (health.isDead()) {
-                continue;
-            }
-
-            SDL_FRect enemyBounds = transform.getRect();
-
-            bool overlaps =
-                bulletBounds.x < enemyBounds.x + enemyBounds.w &&
-                bulletBounds.x + bulletBounds.w > enemyBounds.x &&
-                bulletBounds.y < enemyBounds.y + enemyBounds.h &&
-                bulletBounds.y + bulletBounds.h > enemyBounds.y;
-
-            if (overlaps) {
-                health.takeDamage(1);
-
-                if (health.isDead()) {
-                    ai.changeState(EnemyState::Dead);
-                } else {
-                    ai.changeState(EnemyState::Hurt);
-                }
-
-                bullet.deactivate();
-                break;
-            }
-        }
-    }
-
-    // Item pickup ONLY
+    // Items
     for (auto& e : manager.getEntities()) {
         if (!e->hasComponent<ItemTagComponent>()) {
             continue;
@@ -637,7 +649,7 @@ void Game::update() {
 
     manager.refresh();
 
-    // Door transition
+    // Doors
     for (const DoorSpawn& door : map.getDoors()) {
         SDL_FRect doorRect{door.x, door.y, door.w, door.h};
 
@@ -658,37 +670,6 @@ void Game::update() {
             break;
         }
     }
-
-    // Enemy bullets hit player
-    for (EnemyBullet& bullet : enemyBullets) {
-        if (!bullet.isActive()) {
-            continue;
-        }
-
-        SDL_FRect bulletBounds = bullet.getBounds();
-
-        bool overlaps =
-            playerBounds.x < bulletBounds.x + bulletBounds.w &&
-            playerBounds.x + playerBounds.w > bulletBounds.x &&
-            playerBounds.y < bulletBounds.y + bulletBounds.h &&
-            playerBounds.y + playerBounds.h > bulletBounds.y;
-
-        if (overlaps) {
-            playerHealth.takeDamage(1);
-            bullet.deactivate();
-            std::cout << "Player hit by enemy bullet. HP: " << playerHealth.getHP() << std::endl;
-        }
-    }
-
-    bullets.erase(
-        std::remove_if(bullets.begin(), bullets.end(),
-                       [](const Bullet& bullet) { return !bullet.isActive(); }),
-        bullets.end());
-
-    enemyBullets.erase(
-        std::remove_if(enemyBullets.begin(), enemyBullets.end(),
-                       [](const EnemyBullet& bullet) { return !bullet.isActive(); }),
-        enemyBullets.end());
 }
 
 bool Game::updateHPText() {
@@ -785,44 +766,50 @@ void Game::render() {
         dstRect.y = door.y - camera.y;
         dstRect.w = door.w;
         dstRect.h = door.h;
-
         SDL_RenderTexture(renderer, doorTexture, nullptr, &dstRect);
     }
 
-    // Items
     for (auto& e : manager.getEntities()) {
-        if (!e->hasComponent<ItemTagComponent>()) {
-            continue;
+        if (e->hasComponent<ItemTagComponent>()) {
+            auto& item = e->getComponent<ItemComponent>();
+            if (item.isActive()) {
+                e->getComponent<SpriteComponent>().draw(camRect);
+            }
         }
-
-        auto& item = e->getComponent<ItemComponent>();
-        if (!item.isActive()) {
-            continue;
-        }
-
-        e->getComponent<SpriteComponent>().draw(camRect);
     }
 
-    // Enemies
     for (auto& e : manager.getEntities()) {
-        if (!e->hasComponent<EnemyTagComponent>()) {
+        if (e->hasComponent<EnemyTagComponent>()) {
+            auto& health = e->getComponent<HealthComponent>();
+            if (!health.isDead()) {
+                e->getComponent<SpriteComponent>().draw(camRect);
+            }
+        }
+    }
+
+    for (auto& e : manager.getEntities()) {
+        if (!e->hasComponent<BulletTagComponent>()) {
             continue;
         }
 
-        auto& health = e->getComponent<HealthComponent>();
-        if (health.isDead()) {
+        auto& transform = e->getComponent<TransformComponent>();
+        auto& bullet = e->getComponent<BulletComponent>();
+
+        if (!bullet.isActive()) {
             continue;
         }
 
-        e->getComponent<SpriteComponent>().draw(camRect);
-    }
+        SDL_FRect rect = transform.getRect();
+        rect.x -= camera.x;
+        rect.y -= camera.y;
 
-    for (EnemyBullet& bullet : enemyBullets) {
-        bullet.render(renderer, camRect);
-    }
+        if (bullet.getOwner() == BulletOwner::Player) {
+            SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+        } else {
+            SDL_SetRenderDrawColor(renderer, 255, 100, 100, 255);
+        }
 
-    for (Bullet& bullet : bullets) {
-        bullet.render(renderer, camRect);
+        SDL_RenderFillRect(renderer, &rect);
     }
 
     playerEntity->getComponent<SpriteComponent>().draw(camRect);
@@ -846,9 +833,7 @@ bool Game::loadStage(const char* mapPath) {
     }
 
     manager.refresh();
-
-    enemyBullets.clear();
-    bullets.clear();
+    pendingBulletSpawns.clear();
 
     if (!map.load(mapPath)) {
         std::cout << "Failed to load map: " << mapPath << std::endl;
@@ -879,7 +864,6 @@ bool Game::loadStage(const char* mapPath) {
         }
     }
 
-    // Spawn enemies once
     const std::vector<EnemySpawn>& enemySpawns = map.getEnemySpawns();
     for (const EnemySpawn& spawn : enemySpawns) {
         Entity& enemy = manager.addEntity();
@@ -896,7 +880,6 @@ bool Game::loadStage(const char* mapPath) {
                                   patrolRight);
     }
 
-    // Spawn items once
     const std::vector<ItemSpawn>& itemSpawns = map.getItemSpawns();
     for (const ItemSpawn& spawn : itemSpawns) {
         Entity& item = manager.addEntity();
@@ -927,10 +910,8 @@ void Game::clean() {
         hpTextTexture = nullptr;
     }
 
-    enemyBullets.clear();
-    bullets.clear();
-
     playerEntity = nullptr;
+    pendingBulletSpawns.clear();
 
     if (uiFont) {
         TTF_CloseFont(uiFont);

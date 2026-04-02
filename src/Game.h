@@ -13,14 +13,13 @@
 #include <iostream>
 
 #include "map/Map.h"
-#include "Bullet.h"
-#include "EnemyBullet.h"
 
 #include "ecs/Manager.h"
 
 #include "factories/PlayerFactory.h"
 #include "factories/EnemyFactory.h"
 #include "factories/ItemFactory.h"
+#include "factories/BulletFactory.h"
 
 #include "components/PlayerTagComponent.h"
 #include "components/EnemyTagComponent.h"
@@ -33,12 +32,22 @@
 #include "components/EnemyAIComponent.h"
 #include "components/ItemComponent.h"
 #include "components/ItemTagComponent.h"
+#include "components/BulletTagComponent.h"
+#include "components/BulletComponent.h"
 
 struct Camera {
     float x = 0.0f;
     float y = 0.0f;
     float w = 0.0f;
     float h = 0.0f;
+};
+
+void applyItemEffect(ItemType type);
+struct BulletSpawnRequest {
+    BulletOwner owner;
+    float x;
+    float y;
+    int dir;
 };
 
 class Game {
@@ -93,9 +102,8 @@ private:
     Manager manager;
     Entity* playerEntity;
 
-    // Non-ECS for now
-    std::vector<Bullet> bullets;
-    std::vector<EnemyBullet> enemyBullets;
+    std::vector<BulletSpawnRequest> pendingBulletSpawns;
+
 };
 
 #endif // LASTCARRIAGE_GAME_H
