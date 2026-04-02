@@ -88,6 +88,7 @@ bool Enemy::init(SDL_Renderer* renderer, const char* texturePath,
 
 void Enemy::update(float deltaTime, float playerX, float playerY, const Map& map) {
     attackHitThisFrame = false;
+    shotThisFrame = false;
 
     switch (type) {
         case EnemyType::Patrol:
@@ -403,10 +404,10 @@ void Enemy::updateBossIdle(float deltaTime, float playerX, float playerY) {
 
         float dist = distanceToPlayer(playerX, playerY);
 
-        if (dist > 220.0f) {
-            currentBossAttack = BossAttackType::DashAttack;
-        } else {
+        if (dist > 350.0f) {
             currentBossAttack = BossAttackType::BurstShot;
+        } else {
+            currentBossAttack = BossAttackType::DashAttack;
         }
 
         changeState(EnemyState::Attack);
@@ -441,23 +442,30 @@ void Enemy::updateBossBurstShot(float deltaTime, float playerX, float playerY) {
             bossAttackTimer = 0.0f;
             bossAttackPhase = 1;
         }
-    } else if (bossAttackPhase == 1) {
+    }
+    else if (bossAttackPhase == 1) {
+        shotThisFrame = true;
         std::cout << "Boss fires shot 1\n";
         bossAttackTimer = 0.0f;
         bossAttackPhase = 2;
-    } else if (bossAttackPhase == 2) {
+    }
+    else if (bossAttackPhase == 2) {
         if (bossAttackTimer >= 0.2f) {
+            shotThisFrame = true;
             std::cout << "Boss fires shot 2\n";
             bossAttackTimer = 0.0f;
             bossAttackPhase = 3;
         }
-    } else if (bossAttackPhase == 3) {
+    }
+    else if (bossAttackPhase == 3) {
         if (bossAttackTimer >= 0.2f) {
+            shotThisFrame = true;
             std::cout << "Boss fires shot 3\n";
             bossAttackTimer = 0.0f;
             bossAttackPhase = 4;
         }
-    } else if (bossAttackPhase == 4) {
+    }
+    else if (bossAttackPhase == 4) {
         if (bossAttackTimer >= 0.4f) {
             bossAttackTimer = 0.0f;
             currentBossAttack = BossAttackType::None;
@@ -467,6 +475,7 @@ void Enemy::updateBossBurstShot(float deltaTime, float playerX, float playerY) {
 }
 
 void Enemy::updateBossDashAttack(float deltaTime, float playerX, float playerY) {
+    std::cout << "Boss dash attack\n";
     bossAttackTimer += deltaTime;
 
     if (playerX < x) {
@@ -476,18 +485,26 @@ void Enemy::updateBossDashAttack(float deltaTime, float playerX, float playerY) 
     }
 
     if (bossAttackPhase == 0) {
+        // windup
         if (bossAttackTimer >= 0.4f) {
             bossAttackTimer = 0.0f;
             bossAttackPhase = 1;
         }
-    } else if (bossAttackPhase == 1) {
+    }
+    else if (bossAttackPhase == 1) {
+        // dash
         x += direction * speed * 3.0f * deltaTime;
+
+        // During dash, boss can hurt player on overlap
+        attackHitThisFrame = true;
 
         if (bossAttackTimer >= 0.5f) {
             bossAttackTimer = 0.0f;
             bossAttackPhase = 2;
         }
-    } else if (bossAttackPhase == 2) {
+    }
+    else if (bossAttackPhase == 2) {
+        // recovery
         if (bossAttackTimer >= 0.5f) {
             bossAttackTimer = 0.0f;
             currentBossAttack = BossAttackType::None;
