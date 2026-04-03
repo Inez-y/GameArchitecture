@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="120" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="4" nextobjectid="13">
+<map version="1.10"
+     tiledversion="1.11.2"
+     orientation="orthogonal"
+     renderorder="right-down"
+     width="120"
+     height="20"
+     tilewidth="32"
+     tileheight="32"
+     infinite="0"
+     nextlayerid="7"
+     nextobjectid="502">
+
  <tileset firstgid="1" source="tileset.tsx"/>
+
  <layer id="1" name="Terrain Layer" width="120" height="20">
   <data encoding="csv">
 4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
@@ -23,45 +35,55 @@
 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2
-</data>
+  </data>
  </layer>
- <objectgroup name="Spawn Layer">
-   <object id="20" name="PlayerSpawn" x="96" y="500">
-     <point/>
-   </object>
- </objectgroup>
- <objectgroup name="Enemy Spawn Layer">
-   <object id="30" x="400" y="500" name="Patrol">
-     <point/>
-   </object>
-   <object id="31" x="900" y="500" name="Shooter">
-     <point/>
-   </object>
-      <object id="350" x="1000" y="500" name="Shooter">
-        <point/>
-      </object>
-      <object id="315" x="1100" y="500" name="Flying">
-        <point/>
-      </object>
- </objectgroup>
- <objectgroup id="3" name="Item Layer">
-  <object id="10" x="100" y="600" name="Coin">
+
+ <objectgroup id="2" name="Spawn Layer">
+  <object id="100" name="PlayerSpawn" x="96" y="500">
    <point/>
   </object>
-  <object id="11" x="200" y="600" name="Health">
+ </objectgroup>
+
+ <objectgroup id="3" name="Enemy Spawn Layer">
+  <object id="200" name="Patrol" x="400" y="500">
    <point/>
   </object>
-  <object id="12" x="300" y="600" name="Coin">
+  <object id="201" name="Shooter" x="900" y="500">
    <point/>
   </object>
-  <object id="33" x="400" y="600" name="Health">
-     <point/>
-    </object>
+  <object id="202" name="Shooter" x="1000" y="500">
+   <point/>
+  </object>
+  <object id="203" name="Flying" x="1100" y="500">
+   <point/>
+  </object>
  </objectgroup>
- <objectgroup id="2" name="Collision Layer">
-  <object id="9" x="10.8108" y="370.27" width="862.162" height="89.1892"/>
+
+ <objectgroup id="4" name="Item Layer">
+  <object id="300" name="Coin" x="100" y="600">
+   <point/>
+  </object>
+  <object id="301" name="Health" x="200" y="600">
+   <point/>
+  </object>
+  <object id="302" name="Coin" x="300" y="600">
+   <point/>
+  </object>
+  <object id="303" name="Health" x="400" y="600">
+   <point/>
+  </object>
  </objectgroup>
-  <objectgroup id="100" name="Door Layer">
-   <object id="100" x="1000" y="600" name="../assets/Maps/map1_boss.tmx"/>
-  </objectgroup>
+
+ <objectgroup id="5" name="Collision Layer">
+  <object id="400" x="10.8108" y="370.27" width="862.162" height="89.1892"/>
+ </objectgroup>
+
+ <objectgroup id="6" name="Door Layer">
+  <object id="500" name="DoorToBoss" x="1000" y="600" width="32" height="64">
+   <properties>
+    <property name="targetMap" type="string" value="../assets/Maps/map1_boss.tmx"/>
+   </properties>
+  </object>
+ </objectgroup>
+
 </map>

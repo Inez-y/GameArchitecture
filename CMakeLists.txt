@@ -63,6 +63,19 @@ add_executable(LastCarriage src
         src/components/DoorTagComponent.h
         src/factories/DoorFactory.cpp
         src/factories/DoorFactory.h
+        src/GameContext.h
+        src/systems/ItemSystem.h
+        src/systems/CombatSystem.h
+        src/systems/DoorSystem.h
+        src/systems/RenderSystem.h
+        src/systems/MovementSystem.h
+        src/systems/DoorSystem.cpp
+        src/systems/ItemSystem.cpp
+        src/systems/CombatSystem.cpp
+        src/systems/RenderSystem.cpp
+        src/systems/MovementSystem.cpp
+        src/map/StageManager.h
+        src/map/StageManager.cpp
 )
 
 target_link_libraries(LastCarriage
