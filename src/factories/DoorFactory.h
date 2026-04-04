@@ -15,7 +15,8 @@ public:
                               float y,
                               float w,
                               float h,
-                              const std::string& targetMap);
+                              const std::string& targetMap,
+                              const std::string& targetSpawn);
 };
 
-#endif //LASTCARRIAGE_DOORFACTORY_H
+#endif

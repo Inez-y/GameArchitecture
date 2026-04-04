@@ -10,10 +10,11 @@ Entity& DoorFactory::createDoor(Entity& entity,
                                 float y,
                                 float w,
                                 float h,
-                                const std::string& targetMap) {
+                                const std::string& targetMap,
+                                const std::string& targetSpawn) {
     entity.addComponent<DoorTagComponent>();
     entity.addComponent<TransformComponent>(x, y, w, h);
-    entity.addComponent<DoorComponent>(targetMap);
+    entity.addComponent<DoorComponent>(targetMap, targetSpawn);
 
     return entity;
 }

@@ -3,7 +3,6 @@
 #include "../components/DoorTagComponent.h"
 #include "../components/DoorComponent.h"
 #include "../components/TransformComponent.h"
-#include "../components/PlayerTagComponent.h"
 
 bool DoorSystem::overlaps(const SDL_FRect& a, const SDL_FRect& b) {
     return a.x < b.x + b.w &&
@@ -13,7 +12,7 @@ bool DoorSystem::overlaps(const SDL_FRect& a, const SDL_FRect& b) {
 }
 
 void DoorSystem::update(Manager& manager, GameContext& context, float dt) {
-    if (!context.playerEntity || !context.map) {
+    if (!context.playerEntity) {
         return;
     }
 
@@ -43,6 +42,7 @@ void DoorSystem::update(Manager& manager, GameContext& context, float dt) {
         if (overlaps(playerBounds, transform.getRect())) {
             context.stageChangeRequested = true;
             context.requestedStagePath = door.getTargetMap();
+            context.requestedSpawnId = door.getTargetSpawn().empty() ? "default" : door.getTargetSpawn();
             context.doorTimer = context.doorCooldown;
             break;
         }

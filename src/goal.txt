@@ -32,3 +32,15 @@ src/
 │   └── Hud.h
 └── utils/
     └── ...
+
+
+    Game = lifecycle + system order only
+    InputSystem = input
+    MovementSystem = physics/motion
+    EnemyAISystem = AI/state transitions
+    CombatSystem = bullets/damage
+    ItemSystem = pickups/effects
+    DoorSystem = transitions
+    RenderSystem = world rendering
+    UISystem = HUD
+    StageManager = map loading/spawning

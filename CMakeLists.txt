@@ -76,6 +76,9 @@ add_executable(LastCarriage src
         src/systems/MovementSystem.cpp
         src/map/StageManager.h
         src/map/StageManager.cpp
+        src/map/MapData.h
+        src/map/MapLoader.h
+        src/map/MapLoader.cpp
 )
 
 target_link_libraries(LastCarriage

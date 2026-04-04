@@ -1,8 +1,8 @@
-/*
- * Load map, spawn doors/items/enemies/player
+/**
+* Tunrs map data into entities
  */
-#ifndef LASTCARRIAGE_STORAGEMANAGER_H
-#define LASTCARRIAGE_STORAGEMANAGER_H
+#ifndef LASTCARRIAGE_STAGEMANAGER_H
+#define LASTCARRIAGE_STAGEMANAGER_H
 
 #pragma once
 
@@ -14,14 +14,17 @@
 
 class StageManager {
 public:
-    bool loadStage(Manager& manager, GameContext& context, const std::string& mapPath);
+    bool loadStage(Manager& manager,
+                   GameContext& context,
+                   const std::string& mapPath,
+                   const std::string& spawnId = "default");
 
 private:
     void clearStageEntities(Manager& manager);
     void spawnStageDoors(Manager& manager, GameContext& context);
-    void spawnOrResetPlayer(Manager& manager, GameContext& context);
+    void spawnOrResetPlayer(Manager& manager, GameContext& context, const std::string& spawnId);
     void spawnStageEnemies(Manager& manager, GameContext& context);
     void spawnStageItems(Manager& manager, GameContext& context);
 };
 
-#endif //LASTCARRIAGE_STORAGEMANAGER_H
+#endif

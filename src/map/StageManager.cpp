@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <utility>
+#include <filesystem>
 
 #include "../factories/DoorFactory.h"
 #include "../factories/PlayerFactory.h"
@@ -10,15 +11,40 @@
 
 #include "../components/PlayerTagComponent.h"
 #include "../components/TransformComponent.h"
+#include "../components/EnemyAIComponent.h"
 
-bool StageManager::loadStage(Manager& manager, GameContext& context, const std::string& mapPath) {
+bool StageManager::loadStage(Manager& manager,
+                             GameContext& context,
+                             const std::string& mapPath,
+                             const std::string& spawnId) {
     if (!context.map || !context.renderer) {
+        std::cout << "StageManager::loadStage failed: map or renderer missing.\n";
         return false;
     }
 
+    // Extra debugging messages
+    std::cout << "StageManager loading map=[" << mapPath
+          << "] spawn=[" << spawnId << "]\n";
+
+    std::cout << "Current working directory: "
+              << std::filesystem::current_path() << "\n";
+
+    std::cout << "Exists? "
+              << std::filesystem::exists(mapPath) << "\n";
+
+    std::string resolvedPath = mapPath;
+
+    // If the door only gives a filename, build the full path automatically.
+    if (resolvedPath.find('/') == std::string::npos &&
+        resolvedPath.find('\\') == std::string::npos) {
+        resolvedPath = "../assets/Maps/" + resolvedPath;
+        }
+
+    std::cout << "Resolved map path=[" << resolvedPath << "]\n";
+
     Map loadedMap;
-    if (!loadedMap.load(mapPath.c_str())) {
-        std::cout << "Failed to load map: " << mapPath << std::endl;
+    if (!loadedMap.load(resolvedPath.c_str())) {
+        std::cout << "Failed to load map: [" << resolvedPath << "]\n";
         return false;
     }
 
@@ -27,10 +53,16 @@ bool StageManager::loadStage(Manager& manager, GameContext& context, const std::
     *context.map = std::move(loadedMap);
 
     spawnStageDoors(manager, context);
-    spawnOrResetPlayer(manager, context);
+    spawnOrResetPlayer(manager, context, spawnId);
     spawnStageEnemies(manager, context);
     spawnStageItems(manager, context);
 
+    context.stageChangeRequested = false;
+    context.requestedStagePath.clear();
+    context.requestedSpawnId = "default";
+    context.doorTimer = context.doorCooldown;
+
+    std::cout << "Stage loaded successfully: [" << mapPath << "]\n";
     return true;
 }
 
@@ -53,17 +85,28 @@ void StageManager::spawnStageDoors(Manager& manager, GameContext& context) {
             door.y,
             door.w,
             door.h,
-            door.targetMap
+            door.targetMap,
+            door.targetSpawn
         );
     }
 }
 
-void StageManager::spawnOrResetPlayer(Manager& manager, GameContext& context) {
+void StageManager::spawnOrResetPlayer(Manager& manager,
+                                      GameContext& context,
+                                      const std::string& spawnId) {
     float startX = 100.0f;
     float startY = 100.0f;
 
-    if (context.map->hasPlayerSpawn()) {
-        const SpawnPoint spawn = context.map->getPlayerSpawn();
+    if (context.map->hasSpawnPoint(spawnId)) {
+        const NamedSpawnPoint spawn = context.map->getSpawnPoint(spawnId);
+        startX = spawn.x;
+        startY = spawn.y;
+    } else if (context.map->hasSpawnPoint("default")) {
+        const NamedSpawnPoint spawn = context.map->getSpawnPoint("default");
+        startX = spawn.x;
+        startY = spawn.y;
+    } else if (!context.map->getSpawnPoints().empty()) {
+        const NamedSpawnPoint& spawn = context.map->getSpawnPoints().front();
         startX = spawn.x;
         startY = spawn.y;
     }
@@ -82,18 +125,20 @@ void StageManager::spawnStageEnemies(Manager& manager, GameContext& context) {
     for (const EnemySpawn& spawn : context.map->getEnemySpawns()) {
         Entity& enemy = manager.addEntity();
 
-        const float patrolLeft = spawn.x - 100.0f;
-        const float patrolRight = spawn.x + 100.0f;
-
         EnemyFactory::createEnemy(
             enemy,
             context.renderer,
             spawn.type,
             spawn.x,
             spawn.y,
-            patrolLeft,
-            patrolRight
+            spawn.patrolLeft,
+            spawn.patrolRight
         );
+
+        if (enemy.hasComponent<EnemyAIComponent>()) {
+            auto& ai = enemy.getComponent<EnemyAIComponent>();
+            ai.direction = spawn.facing;
+        }
     }
 }
 

@@ -38,31 +38,41 @@
   </data>
  </layer>
 
- <objectgroup id="2" name="Spawn Layer">
-  <object id="100" name="PlayerSpawn" x="96" y="500">
-   <point/>
+<objectgroup id="2" name="Spawn Layer">
+  <object id="100" name="SpawnPoint" x="96" y="500">
+    <properties>
+      <property name="id" type="string" value="default"/>
+    </properties>
+    <point/>
   </object>
- </objectgroup>
 
- <objectgroup id="3" name="Enemy Spawn Layer">
+  <object id="101" name="SpawnPoint" x="96" y="500">
+    <properties>
+      <property name="id" type="string" value="fromBossDoor"/>
+    </properties>
+    <point/>
+  </object>
+</objectgroup>
+
+<objectgroup id="3" name="Enemy Spawn Layer">
   <object id="200" name="Boss" x="700" y="250">
-   <point/>
+    <point/>
   </object>
- </objectgroup>
+</objectgroup>
 
- <objectgroup id="4" name="Item Layer">
- </objectgroup>
+<objectgroup id="4" name="Item Layer">
+</objectgroup>
 
- <objectgroup id="5" name="Collision Layer">
+<objectgroup id="5" name="Collision Layer">
   <object id="400" x="10.8108" y="370.27" width="862.162" height="89.1892"/>
- </objectgroup>
+</objectgroup>
 
- <objectgroup id="6" name="Door Layer">
+<objectgroup id="6" name="Door Layer">
   <object id="500" name="DoorToMap1" x="200" y="600" width="32" height="64">
-   <properties>
-    <property name="targetMap" type="string" value="../assets/Maps/map1.tmx"/>
-   </properties>
+    <properties>
+      <property name="targetMap" type="string" value="../assets/Maps/map1.tmx"/>
+    </properties>
   </object>
- </objectgroup>
+</objectgroup>
 
 </map>

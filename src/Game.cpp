@@ -2,11 +2,10 @@
 
 #include <iostream>
 
-#include "components/PlayerTagComponent.h"
 #include "components/TransformComponent.h"
-#include "components/PhysicsComponent.h"
 #include "components/WeaponComponent.h"
 #include "components/HealthComponent.h"
+#include "components/InputComponent.h"
 
 Game::Game() = default;
 
@@ -59,16 +58,22 @@ bool Game::init(const char* title, int width, int height, bool fullscreen) {
     context.camera = &camera;
     context.map = &map;
     context.playerEntity = nullptr;
-    context.stageChangeRequested = false;
-    context.requestedStagePath.clear();
-    context.pendingBulletSpawns.clear();
-    context.coinCount = 0;
+
     context.shootCooldown = 0.2f;
     context.shootTimer = 0.0f;
+
     context.doorCooldown = 0.5f;
     context.doorTimer = 0.0f;
 
-    if (!stageManager.loadStage(manager, context, "../assets/Maps/map1.tmx")) {
+    context.coinCount = 0;
+
+    context.stageChangeRequested = false;
+    context.requestedStagePath.clear();
+    context.requestedSpawnId = "default";
+
+    context.pendingBulletSpawns.clear();
+
+    if (!stageManager.loadStage(manager, context, "../assets/Maps/map1.tmx", "default")) {
         std::cout << "Failed to load initial stage." << std::endl;
         return false;
     }
@@ -104,6 +109,11 @@ void Game::handleEvents() {
             continue;
         }
 
+        if (!context.playerEntity->hasComponent<WeaponComponent>() ||
+            !context.playerEntity->hasComponent<TransformComponent>()) {
+            continue;
+        }
+
         auto& weapon = context.playerEntity->getComponent<WeaponComponent>();
         auto& transform = context.playerEntity->getComponent<TransformComponent>();
 
@@ -125,7 +135,7 @@ void Game::handleEvents() {
 
                 weapon.consumeAmmo();
                 context.shootTimer = context.shootCooldown;
-                }
+            }
         }
     }
 
@@ -151,12 +161,19 @@ void Game::update(float dt) {
 
     if (context.stageChangeRequested) {
         const std::string nextStage = context.requestedStagePath;
+        const std::string nextSpawn = context.requestedSpawnId.empty()
+                                      ? "default"
+                                      : context.requestedSpawnId;
 
         context.stageChangeRequested = false;
         context.requestedStagePath.clear();
+        context.requestedSpawnId = "default";
 
         if (!nextStage.empty()) {
-            stageManager.loadStage(manager, context, nextStage);
+            if (!stageManager.loadStage(manager, context, nextStage, nextSpawn)) {
+                std::cout << "Stage transition failed for map=[" << nextStage
+                          << "] spawn=[" << nextSpawn << "]\n";
+            }
         }
     }
 

@@ -141,6 +141,8 @@ void CombatSystem::handleBulletCollisions(Manager& manager, GameContext& context
 
                     if (enemyHealth.isDead()) {
                         enemyAI.changeState(EnemyState::Dead);
+                        enemyEntity->destroy();
+                        std::cout << "Enemy killed and removed.\n";
                     } else {
                         enemyAI.changeState(EnemyState::Hurt);
                     }

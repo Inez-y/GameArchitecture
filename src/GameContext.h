@@ -1,7 +1,6 @@
-// Shared state container
-#ifndef LASTCARRIAGE_GAMECONTEXT_H
-#define LASTCARRIAGE_GAMECONTEXT_H
-
+/**
+ * Shared state container
+ */
 #pragma once
 
 #include <SDL3/SDL.h>
@@ -23,10 +22,9 @@ struct BulletSpawnRequest {
 };
 
 struct GameContext {
-    TTF_Font* uiFont = nullptr;
-
     SDL_Renderer* renderer = nullptr;
     SDL_Texture* tilesetTexture = nullptr;
+    TTF_Font* uiFont = nullptr;
 
     Camera* camera = nullptr;
     Map* map = nullptr;
@@ -42,7 +40,7 @@ struct GameContext {
 
     bool stageChangeRequested = false;
     std::string requestedStagePath;
+    std::string requestedSpawnId = "default";
 
     std::vector<BulletSpawnRequest> pendingBulletSpawns;
 };
-#endif

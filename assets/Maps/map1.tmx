@@ -38,25 +38,53 @@
   </data>
  </layer>
 
- <objectgroup id="2" name="Spawn Layer">
-  <object id="100" name="PlayerSpawn" x="96" y="500">
-   <point/>
+<objectgroup id="2" name="Spawn Layer">
+  <object name="SpawnPoint" x="96" y="500">
+    <properties>
+      <property name="id" type="string" value="start"/>
+    </properties>
+    <point/>
   </object>
- </objectgroup>
+
+  <object name="SpawnPoint" x="1100" y="500">
+    <properties>
+      <property name="id" type="string" value="fromBossDoor"/>
+    </properties>
+    <point/>
+  </object>
+</objectgroup>
 
  <objectgroup id="3" name="Enemy Spawn Layer">
-  <object id="200" name="Patrol" x="400" y="500">
-   <point/>
+<object name="Patrol" x="400" y="500">
+    <properties>
+      <property name="patrolLeft" type="float" value="320"/>
+      <property name="patrolRight" type="float" value="520"/>
+      <property name="facing" type="int" value="-1"/>
+    </properties>
+    <point/>
   </object>
-  <object id="201" name="Shooter" x="900" y="500">
-   <point/>
+
+  <object name="Shooter" x="900" y="500">
+    <properties>
+      <property name="facing" type="int" value="1"/>
+    </properties>
+    <point/>
   </object>
-  <object id="202" name="Shooter" x="1000" y="500">
-   <point/>
-  </object>
-  <object id="203" name="Flying" x="1100" y="500">
-   <point/>
-  </object>
+
+    <object name="Flying" x="900" y="500">
+      <properties>
+        <property name="patrolLeft" type="int" value="1"/>
+      </properties>
+      <point/>
+    </object>
+
+      <object name="Patrol" x="900" y="500">
+        <properties>
+          <property name="patrolRight" type="int" value="1"/>
+        </properties>
+        <point/>
+      </object>
+
  </objectgroup>
 
  <objectgroup id="4" name="Item Layer">
@@ -78,12 +106,12 @@
   <object id="400" x="10.8108" y="370.27" width="862.162" height="89.1892"/>
  </objectgroup>
 
- <objectgroup id="6" name="Door Layer">
-  <object id="500" name="DoorToBoss" x="1000" y="600" width="32" height="64">
-   <properties>
-    <property name="targetMap" type="string" value="../assets/Maps/map1_boss.tmx"/>
-   </properties>
+<objectgroup id ="6" name="Door Layer">
+  <object name="DoorToBoss" x="1000" y="600" width="32" height="64">
+    <properties>
+      <property name="targetMap" type="string" value="../assets/Maps/map1_boss.tmx"/>
+<!--       <property name="targetSpawn" type="string" value="fromMainDoor"/> -->
+    </properties>
   </object>
- </objectgroup>
-
+</objectgroup>
 </map>
