@@ -6,7 +6,7 @@
 #include "../components/core/SpriteComponent.h"
 
 Entity& BulletFactory::createBullet(Entity& entity,
-                                    SDL_Renderer* renderer,
+                                    AssetManager& assets,
                                     BulletOwner owner,
                                     float startX,
                                     float startY,
@@ -15,7 +15,7 @@ Entity& BulletFactory::createBullet(Entity& entity,
     entity.addComponent<TransformComponent>(startX, startY, 16.0f, 8.0f);
     entity.addComponent<BulletComponent>(owner, 300.0f, direction, 1);
 
-    // entity.addComponent<SpriteComponent>(renderer, "../assets/bullet.png");
+    //     entity.addComponent<SpriteComponent>(assets.getTexture(AssetPaths::BULLET));
 
     return entity;
 }

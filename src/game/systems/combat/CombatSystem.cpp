@@ -39,7 +39,10 @@ void CombatSystem::update(Manager& manager, GameContext& context, float dt) {
 
 void CombatSystem::queueEnemyBulletSpawns(Manager& manager, GameContext& context) {
     for (auto& e : manager.getEntities()) {
-        if (!e->hasComponent<EnemyTagComponent>()) {
+        if (!e->hasComponent<EnemyTagComponent>() ||
+              !e->hasComponent<TransformComponent>() ||
+              !e->hasComponent<EnemyAIComponent>() ||
+              !e->hasComponent<HealthComponent>()) {
             continue;
         }
 
@@ -68,7 +71,7 @@ void CombatSystem::spawnQueuedBullets(Manager& manager, GameContext& context) {
         Entity& bullet = manager.addEntity();
         BulletFactory::createBullet(
             bullet,
-            context.renderer,
+            *context.assetManager,
             req.owner,
             req.x,
             req.y,
@@ -83,9 +86,11 @@ void CombatSystem::updateBullets(Manager& manager, GameContext& context, float d
     const float mapPixelWidth = static_cast<float>(context.map->getWidth() * context.map->getTileWidth());
 
     for (auto& e : manager.getEntities()) {
-        if (!e->hasComponent<BulletTagComponent>()) {
+        if (!e->hasComponent<BulletTagComponent>() ||
+            !e->hasComponent<TransformComponent>() ||
+            !e->hasComponent<BulletComponent>()) {
             continue;
-        }
+            }
 
         auto& transform = e->getComponent<TransformComponent>();
         auto& bullet = e->getComponent<BulletComponent>();
@@ -104,14 +109,22 @@ void CombatSystem::updateBullets(Manager& manager, GameContext& context, float d
 }
 
 void CombatSystem::handleBulletCollisions(Manager& manager, GameContext& context) {
+    if (!context.playerEntity->hasComponent<TransformComponent>() ||
+        !context.playerEntity->hasComponent<HealthComponent>()) {
+        return;
+    }
+
     auto& playerTransform = context.playerEntity->getComponent<TransformComponent>();
     auto& playerHealth = context.playerEntity->getComponent<HealthComponent>();
     const SDL_FRect playerBounds = playerTransform.getRect();
 
     for (auto& bulletEntity : manager.getEntities()) {
-        if (!bulletEntity->hasComponent<BulletTagComponent>()) {
-            continue;
-        }
+        if (!bulletEntity->hasComponent<BulletTagComponent>() ||
+            !bulletEntity->hasComponent<TransformComponent>() ||
+            !bulletEntity->hasComponent<BulletComponent>()) {
+                    continue;
+            }
+
 
         auto& bulletTransform = bulletEntity->getComponent<TransformComponent>();
         auto& bullet = bulletEntity->getComponent<BulletComponent>();
@@ -124,9 +137,12 @@ void CombatSystem::handleBulletCollisions(Manager& manager, GameContext& context
 
         if (bullet.getOwner() == BulletOwner::Player) {
             for (auto& enemyEntity : manager.getEntities()) {
-                if (!enemyEntity->hasComponent<EnemyTagComponent>()) {
+                if (!enemyEntity->hasComponent<EnemyTagComponent>() ||
+                    !enemyEntity->hasComponent<TransformComponent>() ||
+                    !enemyEntity->hasComponent<HealthComponent>() ||
+                    !enemyEntity->hasComponent<EnemyAIComponent>()) {
                     continue;
-                }
+                    }
 
                 auto& enemyTransform = enemyEntity->getComponent<TransformComponent>();
                 auto& enemyHealth = enemyEntity->getComponent<HealthComponent>();
@@ -164,14 +180,22 @@ void CombatSystem::handleBulletCollisions(Manager& manager, GameContext& context
 }
 
 void CombatSystem::handleEnemyContactDamage(Manager& manager, GameContext& context) {
+    if (!context.playerEntity->hasComponent<TransformComponent>() ||
+    !context.playerEntity->hasComponent<HealthComponent>()) {
+        return;
+    }
+
     auto& playerTransform = context.playerEntity->getComponent<TransformComponent>();
     auto& playerHealth = context.playerEntity->getComponent<HealthComponent>();
     const SDL_FRect playerBounds = playerTransform.getRect();
 
     for (auto& e : manager.getEntities()) {
-        if (!e->hasComponent<EnemyTagComponent>()) {
+        if (!e->hasComponent<EnemyTagComponent>() ||
+            !e->hasComponent<TransformComponent>() ||
+            !e->hasComponent<HealthComponent>() ||
+            !e->hasComponent<EnemyAIComponent>()) {
             continue;
-        }
+            }
 
         auto& transform = e->getComponent<TransformComponent>();
         auto& ai = e->getComponent<EnemyAIComponent>();

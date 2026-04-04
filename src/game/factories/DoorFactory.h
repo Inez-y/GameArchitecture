@@ -3,14 +3,17 @@
 
 #pragma once
 
-#include "../../engine/ecs/Entity.h"
 #include <SDL3/SDL.h>
 #include <string>
+
+#include "../../engine/ecs/Entity.h"
+#include "../../engine/resources/AssetManager.h"
+#include "../data/AssetPaths.h"
 
 class DoorFactory {
 public:
     static Entity& createDoor(Entity& entity,
-                              SDL_Renderer* renderer,
+                              AssetManager& assets,
                               float x,
                               float y,
                               float w,

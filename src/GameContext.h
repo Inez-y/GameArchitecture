@@ -13,6 +13,7 @@
 #include "../src/game/components/gameplay/BulletComponent.h"
 
 class Entity;
+class AssetManager;
 
 struct BulletSpawnRequest {
     BulletOwner owner;
@@ -23,6 +24,7 @@ struct BulletSpawnRequest {
 
 struct GameContext {
     SDL_Renderer* renderer = nullptr;
+    AssetManager* assetManager = nullptr;
     SDL_Texture* tilesetTexture = nullptr;
     TTF_Font* uiFont = nullptr;
 

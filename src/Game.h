@@ -7,7 +7,6 @@
 #include <SDL3_image/SDL_image.h>
 
 #include "engine/ecs/Manager.h"
-
 #include "engine/core/Camera.h"
 #include "GameContext.h"
 
@@ -17,10 +16,11 @@
 #include "game/systems/rendering/RenderSystem.h"
 #include "game/systems/movement/MovementSystem.h"
 
-#include "game/components/core/InputComponent.h"
-
 #include "game/map/runtime/Map.h"
 #include "game/map/runtime/StageManager.h"
+#include "game/data/AssetPaths.h"
+
+#include "engine/resources/AssetManager.h"
 
 class Game {
 public:
@@ -55,6 +55,7 @@ private:
     RenderSystem renderSystem;
     MovementSystem movementSystem;
     StageManager stageManager;
+    AssetManager assetManager;
 };
 
 #endif // LASTCARRIAGE_GAME_H

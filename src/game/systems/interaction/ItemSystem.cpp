@@ -39,13 +39,20 @@ void ItemSystem::update(Manager& manager, GameContext& context) {
         return;
     }
 
+    if (!context.playerEntity->hasComponent<TransformComponent>() ||
+    !context.playerEntity->hasComponent<HealthComponent>()) {
+        return;
+    }
+
     auto& playerTransform = context.playerEntity->getComponent<TransformComponent>();
     const SDL_FRect playerBounds = playerTransform.getRect();
 
     for (auto& e : manager.getEntities()) {
-        if (!e->hasComponent<ItemTagComponent>()) {
+        if (!e->hasComponent<ItemTagComponent>() ||
+            !e->hasComponent<TransformComponent>() ||
+            !e->hasComponent<ItemComponent>()) {
             continue;
-        }
+            }
 
         auto& transform = e->getComponent<TransformComponent>();
         auto& item = e->getComponent<ItemComponent>();

@@ -26,7 +26,7 @@ static const char* enemyTexturePath(EnemyType type) {
 }
 
 Entity& EnemyFactory::createEnemy(Entity& entity,
-                                  SDL_Renderer* renderer,
+                                  AssetManager& assets,
                                   const std::string& typeName,
                                   float startX,
                                   float startY,
@@ -36,7 +36,7 @@ Entity& EnemyFactory::createEnemy(Entity& entity,
 
     entity.addComponent<EnemyTagComponent>();
     entity.addComponent<TransformComponent>(startX, startY, 32.0f, 32.0f);
-    entity.addComponent<SpriteComponent>(renderer, enemyTexturePath(type));
+    entity.addComponent<SpriteComponent>(assets.getTexture(enemyTexturePath(type)));
     entity.addComponent<PhysicsComponent>(100.0f, 900.0f, 450.0f, type != EnemyType::Flying);
     entity.addComponent<HealthComponent>(type == EnemyType::Boss ? 20 : 3);
 

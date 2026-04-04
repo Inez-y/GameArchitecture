@@ -20,6 +20,13 @@ void MovementSystem::update(Manager& manager, GameContext& context, float dt) {
 }
 
 void MovementSystem::updatePlayer(GameContext& context, float dt) {
+    if (!context.playerEntity ||
+        !context.map ||
+        !context.playerEntity->hasComponent<PhysicsComponent>() ||
+        !context.playerEntity->hasComponent<WeaponComponent>()) {
+        return;
+        }
+
     auto& playerPhysics = context.playerEntity->getComponent<PhysicsComponent>();
     auto& playerWeapon = context.playerEntity->getComponent<WeaponComponent>();
 
@@ -28,12 +35,19 @@ void MovementSystem::updatePlayer(GameContext& context, float dt) {
 }
 
 void MovementSystem::updateEnemies(Manager& manager, GameContext& context, float dt) {
+    if (!context.playerEntity->hasComponent<TransformComponent>()) {
+        return;
+    }
     auto& playerTransform = context.playerEntity->getComponent<TransformComponent>();
 
     for (auto& e : manager.getEntities()) {
-        if (!e->hasComponent<EnemyTagComponent>()) {
+        if (!e->hasComponent<EnemyTagComponent>() ||
+            !e->hasComponent<TransformComponent>() ||
+            !e->hasComponent<PhysicsComponent>() ||
+            !e->hasComponent<HealthComponent>() ||
+            !e->hasComponent<EnemyAIComponent>()) {
             continue;
-        }
+            }
 
         auto& transform = e->getComponent<TransformComponent>();
         auto& physics = e->getComponent<PhysicsComponent>();
@@ -317,9 +331,12 @@ void MovementSystem::updateEnemies(Manager& manager, GameContext& context, float
 }
 
 void MovementSystem::updateCamera(GameContext& context) {
-    if (!context.playerEntity || !context.map || !context.camera) {
+    if (!context.playerEntity ||
+        !context.map ||
+        !context.camera ||
+        !context.playerEntity->hasComponent<TransformComponent>()) {
         return;
-    }
+        }
 
     auto& playerTransform = context.playerEntity->getComponent<TransformComponent>();
 

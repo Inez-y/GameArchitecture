@@ -10,6 +10,7 @@
 Game::Game() = default;
 
 Game::~Game() {
+    std::cout << "Exist the game...\n";
     clean();
 }
 
@@ -19,22 +20,15 @@ bool Game::init(const char* title, int width, int height, bool fullscreen) {
         return false;
     }
 
-    Uint32 windowFlags = fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
-
-    window = SDL_CreateWindow(title, width, height, windowFlags);
-    if (!window) {
-        std::cout << "Window creation failed: " << SDL_GetError() << std::endl;
-        return false;
-    }
-
     if (!TTF_Init()) {
         std::cout << "TTF init failed: " << SDL_GetError() << std::endl;
         return false;
     }
 
-    context.uiFont = TTF_OpenFont("../assets/Fonts/PixelifySans_Font.ttf", 24);
-    if (!context.uiFont) {
-        std::cout << "Failed to load UI font: " << SDL_GetError() << std::endl;
+    Uint32 windowFlags = fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
+    window = SDL_CreateWindow(title, width, height, windowFlags);
+    if (!window) {
+        std::cout << "Window creation failed: " << SDL_GetError() << std::endl;
         return false;
     }
 
@@ -44,9 +38,17 @@ bool Game::init(const char* title, int width, int height, bool fullscreen) {
         return false;
     }
 
-    tilesetTexture = IMG_LoadTexture(renderer, "../assets/Maps/tileset.png");
+    assetManager.setRenderer(renderer);
+
+    context.uiFont = assetManager.getFont(AssetPaths::UI_FONT, 24);
+    if (!context.uiFont) {
+        std::cout << "Failed to load UI font.\n";
+        return false;
+    }
+
+    tilesetTexture = assetManager.getTexture(AssetPaths::TILESET);
     if (!tilesetTexture) {
-        std::cout << "Failed to load tileset texture: " << SDL_GetError() << std::endl;
+        std::cout << "Failed to load tileset texture.\n";
         return false;
     }
 
@@ -54,6 +56,7 @@ bool Game::init(const char* title, int width, int height, bool fullscreen) {
     camera.h = static_cast<float>(height);
 
     context.renderer = renderer;
+    context.assetManager = &assetManager;
     context.tilesetTexture = tilesetTexture;
     context.camera = &camera;
     context.map = &map;
@@ -61,19 +64,15 @@ bool Game::init(const char* title, int width, int height, bool fullscreen) {
 
     context.shootCooldown = 0.2f;
     context.shootTimer = 0.0f;
-
     context.doorCooldown = 0.5f;
     context.doorTimer = 0.0f;
-
     context.coinCount = 0;
-
     context.stageChangeRequested = false;
     context.requestedStagePath.clear();
     context.requestedSpawnId = "default";
-
     context.pendingBulletSpawns.clear();
 
-    if (!stageManager.loadStage(manager, context, "../assets/Maps/map1.tmx", "default")) {
+    if (!stageManager.loadStage(manager, context, AssetPaths::MAP_1, "default")) {
         std::cout << "Failed to load initial stage." << std::endl;
         return false;
     }
@@ -83,6 +82,7 @@ bool Game::init(const char* title, int width, int height, bool fullscreen) {
 }
 
 void Game::run() {
+    std::cout << "Entering run loop...\n";
     Uint64 lastCounter = SDL_GetPerformanceCounter();
 
     while (isRunning) {
@@ -95,6 +95,8 @@ void Game::run() {
         update(dt);
         render();
     }
+
+    std::cout << "Exited run loop...\n";
 }
 
 void Game::handleEvents() {
@@ -148,15 +150,14 @@ void Game::handleEvents() {
 
 void Game::update(float dt) {
     if (!context.playerEntity) {
+        std::cout << "No player entity\n";
         return;
     }
 
     movementSystem.update(manager, context, dt);
     combatSystem.update(manager, context, dt);
     itemSystem.update(manager, context);
-
     manager.refresh();
-
     doorSystem.update(manager, context, dt);
 
     if (context.stageChangeRequested) {
@@ -170,13 +171,13 @@ void Game::update(float dt) {
         context.requestedSpawnId = "default";
 
         if (!nextStage.empty()) {
+            std::cout << "stageManager.loadStage\n";
             if (!stageManager.loadStage(manager, context, nextStage, nextSpawn)) {
                 std::cout << "Stage transition failed for map=[" << nextStage
                           << "] spawn=[" << nextSpawn << "]\n";
             }
         }
     }
-
     manager.refresh();
 }
 
@@ -193,15 +194,20 @@ void Game::render() {
 }
 
 void Game::clean() {
-    if (context.uiFont) {
-        TTF_CloseFont(context.uiFont);
-        context.uiFont = nullptr;
+    if (!window && !renderer && !context.uiFont && !tilesetTexture) {
+        isRunning = false;
+        return;
     }
 
-    if (tilesetTexture) {
-        SDL_DestroyTexture(tilesetTexture);
-        tilesetTexture = nullptr;
-    }
+    context.playerEntity = nullptr;
+    context.map = nullptr;
+    context.camera = nullptr;
+    context.assetManager = nullptr;
+
+    context.uiFont = nullptr;
+    tilesetTexture = nullptr;
+
+    assetManager.clear();
 
     if (renderer) {
         SDL_DestroyRenderer(renderer);

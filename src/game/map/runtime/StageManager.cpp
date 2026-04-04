@@ -17,8 +17,8 @@ bool StageManager::loadStage(Manager& manager,
                              GameContext& context,
                              const std::string& mapPath,
                              const std::string& spawnId) {
-    if (!context.map || !context.renderer) {
-        std::cout << "StageManager::loadStage failed: map or renderer missing.\n";
+    if (!context.map || !context.assetManager) {
+        std::cout << "AssetManager::loadStage failed: map or renderer missing.\n";
         return false;
     }
 
@@ -80,7 +80,7 @@ void StageManager::spawnStageDoors(Manager& manager, GameContext& context) {
         Entity& doorEntity = manager.addEntity();
         DoorFactory::createDoor(
             doorEntity,
-            context.renderer,
+            *context.assetManager,
             door.x,
             door.y,
             door.w,
@@ -113,7 +113,7 @@ void StageManager::spawnOrResetPlayer(Manager& manager,
 
     if (!context.playerEntity) {
         context.playerEntity = &manager.addEntity();
-        PlayerFactory::createPlayer(*context.playerEntity, context.renderer, startX, startY);
+        PlayerFactory::createPlayer(*context.playerEntity, *context.assetManager, startX, startY);
         return;
     }
 
@@ -127,7 +127,7 @@ void StageManager::spawnStageEnemies(Manager& manager, GameContext& context) {
 
         EnemyFactory::createEnemy(
             enemy,
-            context.renderer,
+            *context.assetManager,
             spawn.type,
             spawn.x,
             spawn.y,
@@ -147,7 +147,7 @@ void StageManager::spawnStageItems(Manager& manager, GameContext& context) {
         Entity& item = manager.addEntity();
         ItemFactory::createItem(
             item,
-            context.renderer,
+            *context.assetManager,
             spawn.type,
             spawn.x,
             spawn.y

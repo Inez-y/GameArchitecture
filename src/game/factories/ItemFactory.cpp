@@ -26,7 +26,7 @@ static const char* itemTexturePath(ItemType type) {
 }
 
 Entity& ItemFactory::createItem(Entity& entity,
-                                SDL_Renderer* renderer,
+                                AssetManager& assets,
                                 const std::string& typeName,
                                 float x,
                                 float y) {
@@ -34,7 +34,7 @@ Entity& ItemFactory::createItem(Entity& entity,
 
     entity.addComponent<ItemTagComponent>();
     entity.addComponent<TransformComponent>(x, y, 32.0f, 32.0f);
-    entity.addComponent<SpriteComponent>(renderer, itemTexturePath(type));
+    entity.addComponent<SpriteComponent>(assets.getTexture(itemTexturePath(type)));
     entity.addComponent<ItemComponent>(type);
 
     return entity;

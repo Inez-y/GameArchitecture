@@ -35,7 +35,7 @@ void RenderSystem::render(Manager& manager, const GameContext& context) const {
     // Render player
     if (context.playerEntity &&
         context.playerEntity->hasComponent<SpriteComponent>()) {
-            context.playerEntity->getComponent<SpriteComponent>().draw(cameraRect);
+        context.playerEntity->getComponent<SpriteComponent>().draw(context.renderer, cameraRect);
         }
 
 }
@@ -65,13 +65,15 @@ void RenderSystem::renderItems(Manager& manager, const GameContext& context) con
     const SDL_FRect cameraRect{context.camera->x, context.camera->y, context.camera->w, context.camera->h};
 
     for (auto& e : manager.getEntities()) {
-        if (!e->hasComponent<ItemTagComponent>()) {
-            continue;
+        if (!e->hasComponent<ItemTagComponent>() ||
+            !e->hasComponent<ItemComponent>() ||
+            !e->hasComponent<SpriteComponent>()) {
+                continue;
         }
 
         auto& item = e->getComponent<ItemComponent>();
         if (item.isActive()) {
-            e->getComponent<SpriteComponent>().draw(cameraRect);
+            e->getComponent<SpriteComponent>().draw(context.renderer, cameraRect);
         }
     }
 }
@@ -80,21 +82,25 @@ void RenderSystem::renderEnemies(Manager& manager, const GameContext& context) c
     const SDL_FRect cameraRect{context.camera->x, context.camera->y, context.camera->w, context.camera->h};
 
     for (auto& e : manager.getEntities()) {
-        if (!e->hasComponent<EnemyTagComponent>()) {
+        if (!e->hasComponent<EnemyTagComponent>() ||
+            !e->hasComponent<HealthComponent>() ||
+            !e->hasComponent<SpriteComponent>()) {
             continue;
-        }
+            }
 
         auto& health = e->getComponent<HealthComponent>();
         if (!health.isDead()) {
-            e->getComponent<SpriteComponent>().draw(cameraRect);
+            e->getComponent<SpriteComponent>().draw(context.renderer, cameraRect);
         }
     }
 }
 
 void RenderSystem::renderBullets(Manager& manager, const GameContext& context) const {
     for (auto& e : manager.getEntities()) {
-        if (!e->hasComponent<BulletTagComponent>()) {
-            continue;
+        if (!e->hasComponent<BulletTagComponent>() ||
+            !e->hasComponent<TransformComponent>() ||
+            !e->hasComponent<BulletComponent>()) {
+                continue;
         }
 
         auto& transform = e->getComponent<TransformComponent>();

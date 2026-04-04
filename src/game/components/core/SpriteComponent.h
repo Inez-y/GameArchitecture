@@ -1,47 +1,34 @@
 // Assures ECS components has entity pointer access
 #ifndef LASTCARRIAGE_SPRITECOMPONENT_H
 #define LASTCARRIAGE_SPRITECOMPONENT_H
-
 #pragma once
 
 #include "../../../engine/ecs/Component.h"
 #include "TransformComponent.h"
-
 #include <SDL3/SDL.h>
-#include <SDL3_image/SDL_image.h>
 #include <iostream>
 
 class SpriteComponent : public Component {
 public:
-    SDL_Renderer* renderer;
-    SDL_Texture* texture;
-    TransformComponent* transform;
-
-    SpriteComponent(SDL_Renderer* renderer, const char* texturePath)
-        : renderer(renderer), texture(nullptr), transform(nullptr) {
-        texture = IMG_LoadTexture(renderer, texturePath);
-        if (!texture) {
-            std::cout << "Failed to load sprite texture: " << SDL_GetError() << std::endl;
-        }
-    }
-
-    ~SpriteComponent() override {
-        if (texture) {
-            SDL_DestroyTexture(texture);
-            texture = nullptr;
-        }
-    }
+    explicit SpriteComponent(SDL_Texture* tex)
+        : texture(tex) {}
 
     void init() override {
-        transform = &entity->getComponent<TransformComponent>();
+        if (entity->hasComponent<TransformComponent>()) {
+            transform = &entity->getComponent<TransformComponent>();
+        }
     }
 
     SDL_Texture* getTexture() const {
         return texture;
     }
 
-    void draw(const SDL_FRect& camera) {
-        if (!texture || !transform) {
+    void setTexture(SDL_Texture* tex) {
+        texture = tex;
+    }
+
+    void draw(SDL_Renderer* renderer, const SDL_FRect& camera) {
+        if (!renderer || !texture || !transform) {
             return;
         }
 
@@ -53,6 +40,10 @@ public:
 
         SDL_RenderTexture(renderer, texture, nullptr, &dstRect);
     }
+
+private:
+    SDL_Texture* texture = nullptr;
+    TransformComponent* transform = nullptr;
 };
 
 #endif //LASTCARRIAGE_SPRITECOMPONENT_H

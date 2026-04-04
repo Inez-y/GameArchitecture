@@ -5,7 +5,7 @@
 #include "../components/core/TransformComponent.h"
 
 Entity& DoorFactory::createDoor(Entity& entity,
-                                SDL_Renderer* renderer,
+                                AssetManager& assets,
                                 float x,
                                 float y,
                                 float w,
@@ -15,6 +15,9 @@ Entity& DoorFactory::createDoor(Entity& entity,
     entity.addComponent<DoorTagComponent>();
     entity.addComponent<TransformComponent>(x, y, w, h);
     entity.addComponent<DoorComponent>(targetMap, targetSpawn);
+
+    // entity.addComponent<SpriteComponent>(assets.getTexture(AssetPaths::DOOR));
+
 
     return entity;
 }

@@ -3,14 +3,17 @@
 
 #pragma once
 
-#include "../../engine/ecs/Entity.h"
 #include <SDL3/SDL.h>
+
+#include "../../engine/ecs/Entity.h"
 #include "../../game/components/gameplay/EnemyAIComponent.h"
+#include "../../engine/resources/AssetManager.h"
+#include "../data/AssetPaths.h"
 
 class EnemyFactory {
 public:
     static Entity& createEnemy(Entity& entity,
-                               SDL_Renderer* renderer,
+                               AssetManager& assets,
                                const std::string& typeName,
                                float startX,
                                float startY,

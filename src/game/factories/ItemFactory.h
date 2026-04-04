@@ -3,14 +3,17 @@
 
 #pragma once
 
-#include "../../engine/ecs/Entity.h"
 #include <SDL3/SDL.h>
 #include <string>
+
+#include "../../engine/ecs/Entity.h"
+#include "../../engine/resources/AssetManager.h"
+#include "../data/AssetPaths.h"
 
 class ItemFactory {
 public:
     static Entity& createItem(Entity& entity,
-                              SDL_Renderer* renderer,
+                              AssetManager& assets,
                               const std::string& typeName,
                               float x,
                               float y);

@@ -4,12 +4,14 @@
 #pragma once
 
 #include "../../engine/ecs/Entity.h"
+#include "../../engine/resources/AssetManager.h"
+#include "../../game/data/AssetPaths.h"
 #include <SDL3/SDL.h>
 
 class PlayerFactory {
 public:
     static Entity& createPlayer(Entity& playerEntity,
-                                SDL_Renderer* renderer,
+                                AssetManager& assets,
                                 float startX,
                                 float startY);
 };

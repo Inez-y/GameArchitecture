@@ -12,7 +12,7 @@ bool DoorSystem::overlaps(const SDL_FRect& a, const SDL_FRect& b) {
 }
 
 void DoorSystem::update(Manager& manager, GameContext& context, float dt) {
-    if (!context.playerEntity) {
+    if (!context.playerEntity || !context.playerEntity->hasComponent<TransformComponent>()) {
         return;
     }
 
@@ -28,9 +28,11 @@ void DoorSystem::update(Manager& manager, GameContext& context, float dt) {
     const SDL_FRect playerBounds = playerTransform.getRect();
 
     for (auto& e : manager.getEntities()) {
-        if (!e->hasComponent<DoorTagComponent>()) {
+        if (!e->hasComponent<DoorTagComponent>() ||
+            !e->hasComponent<TransformComponent>() ||
+            !e->hasComponent<DoorComponent>()) {
             continue;
-        }
+            }
 
         auto& transform = e->getComponent<TransformComponent>();
         auto& door = e->getComponent<DoorComponent>();
