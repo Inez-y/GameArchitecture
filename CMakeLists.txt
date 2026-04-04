@@ -28,57 +28,68 @@ find_package(SDL3_ttf REQUIRED)
 
 add_executable(LastCarriage src
         src/main.cpp
-        src/map/Map.h
-        src/map/Map.cpp
         src/Game.cpp
         src/Game.h
+        src/GameContext.h
         src/vendor/tinyxml2.h
         src/vendor/tinyxml2.cpp
-        src/Camera.h
-        src/ecs/Component.h
-        src/ecs/Entity.h
-        src/ecs/Manager.h
-        src/components/TransformComponent.h
-        src/components/HealthComponent.h
-        src/components/SpriteComponent.h
-        src/components/PhysicsComponent.h
-        src/components/WeaponComponent.h
-        src/components/InputComponent.h
-        src/factories/PlayerFactory.cpp
-        src/factories/PlayerFactory.h
-        src/components/PlayerTagComponent.h
-        src/components/EnemyTagComponent.h
-        src/components/EnemyAIComponent.h
-        src/factories/EnemyFactory.cpp
-        src/factories/EnemyFactory.h
-        src/components/ItemComponent.h
-        src/components/ItemTagComponent.h
-        src/factories/ItemFactory.cpp
-        src/factories/ItemFactory.h
-        src/components/BulletComponent.h
-        src/components/BulletTagComponent.h
-        src/factories/BulletFactory.cpp
-        src/factories/BulletFactory.h
-        src/components/DoorComponent.h
-        src/components/DoorTagComponent.h
-        src/factories/DoorFactory.cpp
-        src/factories/DoorFactory.h
-        src/GameContext.h
-        src/systems/ItemSystem.h
-        src/systems/CombatSystem.h
-        src/systems/DoorSystem.h
-        src/systems/RenderSystem.h
-        src/systems/MovementSystem.h
-        src/systems/DoorSystem.cpp
-        src/systems/ItemSystem.cpp
-        src/systems/CombatSystem.cpp
-        src/systems/RenderSystem.cpp
-        src/systems/MovementSystem.cpp
-        src/map/StageManager.h
-        src/map/StageManager.cpp
-        src/map/MapData.h
-        src/map/MapLoader.h
-        src/map/MapLoader.cpp
+        src/engine/core/Camera.h
+        src/engine/ecs/Component.h
+        src/engine/ecs/Entity.h
+        src/engine/ecs/Manager.h
+
+        src/game/map/runtime/Map.h
+        src/game/map/runtime/Map.cpp
+        src/game/components/core/TransformComponent.h
+        src/game/components/core/HealthComponent.h
+        src/game/components/core/SpriteComponent.h
+        src/game/components/core/PhysicsComponent.h
+        src/game/components/gameplay/WeaponComponent.h
+        src/game/components/core/InputComponent.h
+        src/game/components/identity/PlayerTagComponent.h
+        src/game/components/identity/EnemyTagComponent.h
+        src/game/components/gameplay/EnemyAIComponent.h
+        src/game/components/gameplay/ItemComponent.h
+        src/game/components/identity/ItemTagComponent.h
+        src/game/components/gameplay/DoorComponent.h
+        src/game/components/identity/DoorTagComponent.h
+        src/game/components/gameplay/BulletComponent.h
+        src/game/components/identity/BulletTagComponent.h
+        src/game/factories/BulletFactory.cpp
+        src/game/factories/BulletFactory.h
+        src/game/factories/ItemFactory.cpp
+        src/game/factories/ItemFactory.h
+        src/game/factories/DoorFactory.cpp
+        src/game/factories/DoorFactory.h
+        src/game/factories/EnemyFactory.cpp
+        src/game/factories/EnemyFactory.h
+        src/game/factories/PlayerFactory.cpp
+        src/game/factories/PlayerFactory.h
+
+        src/game/systems/interaction/ItemSystem.h
+        src/game/systems/combat/CombatSystem.h
+        src/game/systems/interaction/DoorSystem.h
+        src/game/systems/rendering/RenderSystem.h
+        src/game/systems/movement/MovementSystem.h
+        src/game/systems/interaction/DoorSystem.cpp
+        src/game/systems/interaction/ItemSystem.cpp
+        src/game/systems/combat/CombatSystem.cpp
+        src/game/systems/rendering/RenderSystem.cpp
+        src/game/systems/movement/MovementSystem.cpp
+        src/game/systems/physics/CollisionSystem.cpp
+        src/game/systems/physics/CollisionSystem.h
+        src/game/map/runtime/StageManager.h
+        src/game/map/runtime/StageManager.cpp
+        src/game/map/data/MapData.h
+        src/game/map/loading/MapLoader.h
+        src/game/map/loading/MapLoader.cpp
+        src/game/data/AssetPaths.h
+        src/engine/resources/AssetManager.cpp
+        src/engine/resources/AssetManager.h
+        src/engine/core/Services.h
+        src/game/scenes/IScene.h
+        src/game/scenes/PlayScene.cpp
+        src/game/scenes/PlayScene.h
 )
 
 target_link_libraries(LastCarriage

@@ -6,21 +6,21 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 
-#include "ecs/Manager.h"
+#include "engine/ecs/Manager.h"
 
-#include "Camera.h"
+#include "engine/core/Camera.h"
 #include "GameContext.h"
 
-#include "systems/DoorSystem.h"
-#include "systems/ItemSystem.h"
-#include "systems/CombatSystem.h"
-#include "systems/RenderSystem.h"
-#include "systems/MovementSystem.h"
+#include "game/systems/interaction/DoorSystem.h"
+#include "game/systems/interaction/ItemSystem.h"
+#include "game/systems/combat/CombatSystem.h"
+#include "game/systems/rendering/RenderSystem.h"
+#include "game/systems/movement/MovementSystem.h"
 
-#include "components/InputComponent.h"
+#include "game/components/core/InputComponent.h"
 
-#include "map/Map.h"
-#include "map/StageManager.h"
+#include "game/map/runtime/Map.h"
+#include "game/map/runtime/StageManager.h"
 
 class Game {
 public:

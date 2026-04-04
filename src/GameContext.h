@@ -8,9 +8,9 @@
 #include <vector>
 #include <string>
 
-#include "Camera.h"
-#include "map/Map.h"
-#include "components/BulletComponent.h"
+#include "engine/core/Camera.h"
+#include "../src/game/map/runtime/Map.h"
+#include "../src/game/components/gameplay/BulletComponent.h"
 
 class Entity;
 

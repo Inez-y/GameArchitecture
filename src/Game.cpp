@@ -2,10 +2,10 @@
 
 #include <iostream>
 
-#include "components/TransformComponent.h"
-#include "components/WeaponComponent.h"
-#include "components/HealthComponent.h"
-#include "components/InputComponent.h"
+#include "game/components/core/TransformComponent.h"
+#include "game/components/gameplay/WeaponComponent.h"
+#include "game/components/core/HealthComponent.h"
+#include "game/components/core/InputComponent.h"
 
 Game::Game() = default;
 
