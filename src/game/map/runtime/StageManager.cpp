@@ -37,7 +37,7 @@ bool StageManager::loadStage(Manager& manager,
     // If the door only gives a filename, build the full path automatically.
     if (resolvedPath.find('/') == std::string::npos &&
         resolvedPath.find('\\') == std::string::npos) {
-        resolvedPath = "../assets/Maps/" + resolvedPath;
+        resolvedPath = "../assets/maps/" + resolvedPath;
         }
 
     std::cout << "Resolved map path=[" << resolvedPath << "]\n";

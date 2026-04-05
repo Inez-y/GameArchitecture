@@ -4,11 +4,11 @@
 #pragma once
 
 namespace AssetPaths {
-    constexpr const char* TILESET = "../assets/Maps/tileset.png";
-    constexpr const char* MAP_1 = "../assets/Maps/map1.tmx";
-    constexpr const char* MAP_1_BOSS = "../assets/Maps/map1_boss.tmx";
+    constexpr const char* TILESET = "../assets/maps/tileset.png";
+    constexpr const char* MAP_1 = "../assets/maps/map1.tmx";
+    constexpr const char* MAP_1_BOSS = "../assets/maps/map1_boss.tmx";
 
-    constexpr const char* UI_FONT = "../assets/Fonts/PixelifySans_Font.ttf";
+    constexpr const char* UI_FONT = "../assets/fonts/PixelifySans_Font.ttf";
 
     constexpr const char* PLAYER = "../assets/player.png";
     constexpr const char* ENEMY = "../assets/enemy.png";
