@@ -55,7 +55,7 @@
 </objectgroup>
 
 <objectgroup id="3" name="Enemy Spawn Layer">
-  <object id="200" name="Boss" x="700" y="250">
+  <object id="200" name="Boss" x="700" y="500">
     <point/>
   </object>
 </objectgroup>
