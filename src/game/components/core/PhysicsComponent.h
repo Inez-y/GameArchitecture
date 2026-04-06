@@ -3,8 +3,9 @@
 #pragma once
 
 #include "../../../engine/ecs/Component.h"
-#include "TransformComponent.h"
+#include "../../../engine/ecs/Entity.h"
 #include "../../map/runtime/Map.h"
+#include "TransformComponent.h"
 #include <SDL3/SDL.h>
 
 class PhysicsComponent : public Component {

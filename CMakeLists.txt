@@ -90,6 +90,8 @@ add_executable(LastCarriage src
         src/game/scenes/IScene.h
         src/game/scenes/PlayScene.cpp
         src/game/scenes/PlayScene.h
+        src/game/systems/movement/EnemyMovementLogic.cpp
+        src/game/systems/movement/EnemyMovementLogic.h
 )
 
 target_link_libraries(LastCarriage
