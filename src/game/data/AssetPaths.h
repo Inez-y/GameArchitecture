@@ -22,6 +22,7 @@ namespace AssetPaths {
     constexpr const char* PLAYER_ATTACK_SPRITESHEET = "../assets/animations/player_attack/spritesheet.png";
     constexpr const char* PLAYER_HURT_SPRITESHEET   = "../assets/animations/player_hurt/spritesheet.png";
     constexpr const char* PLAYER_DEAD_SPRITESHEET   = "../assets/animations/player_dead/spritesheet.png";
+    constexpr const char* PLAYER_JUMP_SPRITESHEET   = "../assets/animations/player_jump/spritesheet.png";
 
     // Enemy animation sheets
     constexpr const char* ENEMY_IDLE_SPRITESHEET   = "../assets/animations/player_idle/spritesheet.png";

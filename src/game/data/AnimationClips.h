@@ -4,12 +4,20 @@
 #pragma once
 
 #include "../components/core/AnimationComponent.h"
+#include "AssetPaths.h"
 
 namespace AnimationPresets {
 
-    struct AnimationSet {
-        int frameWidth;
-        int frameHeight;
+    struct PlayerAnimationSet {
+        AnimationClip idle;
+        AnimationClip run;
+        AnimationClip attack;
+        AnimationClip hurt;
+        AnimationClip dead;
+        AnimationClip jump;
+    };
+
+    struct EnemyAnimationSet {
         AnimationClip idle;
         AnimationClip run;
         AnimationClip attack;
@@ -17,35 +25,42 @@ namespace AnimationPresets {
         AnimationClip dead;
     };
 
-    inline const AnimationSet Player{
-        228, 292,
-
-        {0, 23, 0.28f, true},   // idle
-        {1, 6, 0.10f, true},   // run
-        {2, 4, 0.08f, false},  // attack
-        {3, 2, 0.12f, false},  // hurt
-        {4, 4, 0.18f, false}   // dead
+    inline const PlayerAnimationSet Player{
+        {AssetPaths::PLAYER_IDLE_SPRITESHEET,   0, 228, 192, 23, 0.18f, true}, // 5244 / 228 = 23 frames
+        {AssetPaths::PLAYER_RUN_SPRITESHEET,    0, 228, 192, 8, 0.07f, true}, // 1824 / 228 = 8
+        {AssetPaths::PLAYER_ATTACK_SPRITESHEET, 0, 228, 192, 16, 0.15f, false}, // 3648 / 228 = 16
+        {AssetPaths::PLAYER_HURT_SPRITESHEET,   0, 228, 192, 4,  0.09f, false},// 912 / 228 = 4
+        {AssetPaths::PLAYER_DEAD_SPRITESHEET,   0, 228, 192, 3, 0.12f, false}, // 684 / 228 = 3
+        {AssetPaths::PLAYER_JUMP_SPRITESHEET,   0, 228, 192, 8,  0.09f, false} // 1824 / 228 = 8
     };
 
-    inline const AnimationSet Enemy{
-        32, 32,
-        {0, 4, 0.18f, true},   // idle
-        {1, 6, 0.12f, true},   // run
-        {2, 4, 0.10f, false},  // attack
-        {3, 2, 0.12f, false},  // hurt
-        {4, 4, 0.18f, false}   // dead
+    inline const EnemyAnimationSet Enemy{
+        {AssetPaths::ENEMY_IDLE_SPRITESHEET,   0, 228, 192, 12, 0.10f, true},
+        {AssetPaths::ENEMY_RUN_SPRITESHEET,    0, 228, 192, 12, 0.08f, true},
+        {AssetPaths::ENEMY_ATTACK_SPRITESHEET, 0, 228, 192, 8,  0.07f, false},
+        {AssetPaths::ENEMY_HURT_SPRITESHEET,   0, 228, 192, 4,  0.10f, false},
+        {AssetPaths::ENEMY_DEAD_SPRITESHEET,   0, 228, 192, 8,  0.12f, false}
     };
 
-    inline const AnimationSet Boss{
-        64, 64,
-        {0, 4, 0.18f, true},   // idle
-        {1, 6, 0.10f, true},   // run
-        {2, 6, 0.09f, false},  // attack
-        {3, 2, 0.12f, false},  // hurt
-        {4, 6, 0.16f, false}   // dead
+    inline const EnemyAnimationSet Boss{
+        {AssetPaths::BOSS_IDLE_SPRITESHEET,   0, 228, 192, 12, 0.12f, true},
+        {AssetPaths::BOSS_RUN_SPRITESHEET,    0, 228, 192, 10, 0.09f, true},
+        {AssetPaths::BOSS_ATTACK_SPRITESHEET, 0, 228, 192, 14, 0.07f, false},
+        {AssetPaths::BOSS_HURT_SPRITESHEET,   0, 228, 192, 4,  0.10f, false},
+        {AssetPaths::BOSS_DEAD_SPRITESHEET,   0, 228, 192, 10, 0.14f, false}
     };
 
-    inline void applySet(AnimationComponent& anim, const AnimationSet& set) {
+    inline void applySet(AnimationComponent& anim, const PlayerAnimationSet& set) {
+        anim.addClip("idle", set.idle);
+        anim.addClip("run", set.run);
+        anim.addClip("attack", set.attack);
+        anim.addClip("hurt", set.hurt);
+        anim.addClip("dead", set.dead);
+        anim.addClip("jump", set.jump);
+        anim.play("idle");
+    }
+
+    inline void applySet(AnimationComponent& anim, const EnemyAnimationSet& set) {
         anim.addClip("idle", set.idle);
         anim.addClip("run", set.run);
         anim.addClip("attack", set.attack);

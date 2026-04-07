@@ -1,19 +1,28 @@
 #include "AnimationSystem.h"
 
+#include "../../../engine/resources/AssetManager.h"
 #include "../../components/core/AnimationComponent.h"
 #include "../../components/core/SpriteComponent.h"
 #include "../../components/core/PhysicsComponent.h"
 #include "../../components/core/HealthComponent.h"
-#include "../../components/core/InputComponent.h"
 #include "../../components/gameplay/EnemyAIComponent.h"
 #include "../../components/identity/PlayerTagComponent.h"
 #include "../../components/identity/EnemyTagComponent.h"
 
-static void advanceAnimation(AnimationComponent& anim, SpriteComponent& sprite, float dt) {
+static void advanceAnimation(AnimationComponent& anim,
+                             SpriteComponent& sprite,
+                             AssetManager& assets,
+                             float dt) {
     const AnimationClip* clip = anim.getCurrentClip();
     if (!clip) {
         return;
     }
+
+    SDL_Texture* texture = assets.getTexture(clip->spritesheetPath);
+    if (!texture) {
+        return;
+    }
+    sprite.setTexture(texture);
 
     anim.timer += dt;
 
@@ -32,10 +41,10 @@ static void advanceAnimation(AnimationComponent& anim, SpriteComponent& sprite, 
     }
 
     SDL_FRect srcRect{
-        static_cast<float>(anim.currentFrame * anim.frameWidth),
-        static_cast<float>(clip->row * anim.frameHeight),
-        static_cast<float>(anim.frameWidth),
-        static_cast<float>(anim.frameHeight)
+        static_cast<float>(anim.currentFrame * clip->frameWidth),
+        static_cast<float>(clip->row * clip->frameHeight),
+        static_cast<float>(clip->frameWidth),
+        static_cast<float>(clip->frameHeight)
     };
 
     sprite.setSourceRect(srcRect);
@@ -59,6 +68,14 @@ static void updatePlayerAnimation(Entity& entity) {
 
     if (entity.hasComponent<PhysicsComponent>()) {
         auto& physics = entity.getComponent<PhysicsComponent>();
+
+        if (!physics.isGrounded()) {
+            if (anim.hasClip("jump")) {
+                anim.play("jump");
+            }
+            return;
+        }
+
         if (physics.getMoveX() != 0.0f) {
             if (anim.hasClip("run")) {
                 anim.play("run");
@@ -128,14 +145,15 @@ static void updateEnemyAnimation(Entity& entity) {
 }
 
 void AnimationSystem::update(Manager& manager, GameContext& context, float dt) {
+    if (!context.assetManager) {
+        return;
+    }
+
     for (auto& e : manager.getEntities()) {
         if (!e->hasComponent<SpriteComponent>() ||
             !e->hasComponent<AnimationComponent>()) {
             continue;
         }
-
-        auto& sprite = e->getComponent<SpriteComponent>();
-        auto& anim = e->getComponent<AnimationComponent>();
 
         if (e->hasComponent<PlayerTagComponent>()) {
             updatePlayerAnimation(*e);
@@ -143,19 +161,18 @@ void AnimationSystem::update(Manager& manager, GameContext& context, float dt) {
             updateEnemyAnimation(*e);
         }
 
-        advanceAnimation(anim, sprite, dt);
+        auto& sprite = e->getComponent<SpriteComponent>();
+        auto& anim = e->getComponent<AnimationComponent>();
+
+        advanceAnimation(anim, sprite, *context.assetManager, dt);
     }
 
     if (context.playerEntity &&
         context.playerEntity->hasComponent<SpriteComponent>() &&
-        context.playerEntity->hasComponent<AnimationComponent>()) {
+        context.playerEntity->hasComponent<AnimationComponent>() &&
+        !context.playerEntity->hasComponent<PlayerTagComponent>()) {
         auto& sprite = context.playerEntity->getComponent<SpriteComponent>();
         auto& anim = context.playerEntity->getComponent<AnimationComponent>();
-
-        if (context.playerEntity->hasComponent<PlayerTagComponent>()) {
-            updatePlayerAnimation(*context.playerEntity);
-        }
-
-        advanceAnimation(anim, sprite, dt);
+        advanceAnimation(anim, sprite, *context.assetManager, dt);
     }
 }

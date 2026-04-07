@@ -16,6 +16,7 @@ Entity& PlayerFactory::createPlayer(Entity& entity,
                                     float startX,
                                     float startY) {
     entity.addComponent<PlayerTagComponent>();
+    // Raw frame size = 228 x 192
     entity.addComponent<TransformComponent>(startX, startY, 228.0f, 192.0f);
 
     // Start with idle sheet; AnimationSystem should swap textures later.
@@ -28,7 +29,7 @@ Entity& PlayerFactory::createPlayer(Entity& entity,
     entity.addComponent<WeaponComponent>(6, 1.2f);
     entity.addComponent<InputComponent>();
 
-    auto& anim = entity.addComponent<AnimationComponent>(228, 192);
+    auto& anim = entity.addComponent<AnimationComponent>();
     AnimationPresets::applySet(anim, AnimationPresets::Player);
 
     return entity;

@@ -8,7 +8,10 @@
 #include <unordered_map>
 
 struct AnimationClip {
+    std::string spritesheetPath;
     int row = 0;
+    int frameWidth = 0;
+    int frameHeight = 0;
     int frameCount = 1;
     float frameDuration = 0.1f;
     bool loop = true;
@@ -16,8 +19,7 @@ struct AnimationClip {
 
 class AnimationComponent : public Component {
 public:
-    AnimationComponent(int frameWidth, int frameHeight)
-        : frameWidth(frameWidth), frameHeight(frameHeight) {}
+    AnimationComponent() = default;
 
     void addClip(const std::string& name, const AnimationClip& clip) {
         clips[name] = clip;
@@ -55,8 +57,6 @@ public:
         return currentClip;
     }
 
-    int frameWidth = 0;
-    int frameHeight = 0;
     int currentFrame = 0;
     float timer = 0.0f;
     bool finished = false;
@@ -67,4 +67,4 @@ private:
     std::string currentClip;
 };
 
-#endif
+#endif // LASTCARRIAGE_ANIMATIONCOMPONENT_H

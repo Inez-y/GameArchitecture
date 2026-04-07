@@ -5,6 +5,7 @@
 
 #include "../../../GameContext.h"
 #include "../../../engine/ecs/Manager.h"
+#include "../../data/AssetPaths.h"
 
 class AnimationSystem {
 public:

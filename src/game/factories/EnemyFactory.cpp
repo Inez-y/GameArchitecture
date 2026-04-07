@@ -18,7 +18,7 @@ static EnemyType stringToEnemyType(const std::string& type) {
     return EnemyType::Patrol;
 }
 
-static const AnimationPresets::AnimationSet& enemyAnimationSet(EnemyType type) {
+static const AnimationPresets::EnemyAnimationSet& enemyAnimationSet(EnemyType type) {
     switch (type) {
         case EnemyType::Boss:
             return AnimationPresets::Boss;
@@ -54,14 +54,16 @@ Entity& EnemyFactory::createEnemy(Entity& entity,
     const auto& animSet = enemyAnimationSet(type);
 
     entity.addComponent<EnemyTagComponent>();
+
+    // Use idle clip size as the initial source-frame size.
+    // You can scale this down if the art is too large in-game.
     entity.addComponent<TransformComponent>(
         startX,
         startY,
-        static_cast<float>(animSet.frameWidth),
-        static_cast<float>(animSet.frameHeight)
+        static_cast<float>(animSet.idle.frameWidth),
+        static_cast<float>(animSet.idle.frameHeight)
     );
 
-    // Start with idle sheet; AnimationSystem should swap textures later.
     entity.addComponent<SpriteComponent>(
         assets.getTexture(enemyInitialSpritesheet(type))
     );
@@ -89,10 +91,7 @@ Entity& EnemyFactory::createEnemy(Entity& entity,
         ai.chaseRange = 220.0f;
     }
 
-    auto& anim = entity.addComponent<AnimationComponent>(
-        animSet.frameWidth,
-        animSet.frameHeight
-    );
+    auto& anim = entity.addComponent<AnimationComponent>();
     AnimationPresets::applySet(anim, animSet);
 
     return entity;
