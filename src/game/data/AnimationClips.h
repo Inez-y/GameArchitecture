@@ -18,8 +18,9 @@ namespace AnimationPresets {
     };
 
     inline const AnimationSet Player{
-        32, 32,
-        {0, 4, 0.15f, true},   // idle
+        228, 292,
+
+        {0, 23, 0.28f, true},   // idle
         {1, 6, 0.10f, true},   // run
         {2, 4, 0.08f, false},  // attack
         {3, 2, 0.12f, false},  // hurt
