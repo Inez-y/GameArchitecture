@@ -24,6 +24,7 @@
 #include "../systems/interaction/ItemSystem.h"
 #include "../systems/combat/CombatSystem.h"
 #include "../systems/rendering/RenderSystem.h"
+#include "../systems/rendering/AnimationSystem.h"
 #include "../systems/movement/MovementSystem.h"
 
 #include "../components/gameplay/WeaponComponent.h"
@@ -58,6 +59,7 @@ private:
     RenderSystem renderSystem;
     MovementSystem movementSystem;
     StageManager stageManager;
+    AnimationSystem animationSystem;
 };
 
 #endif // LASTCARRIAGE_PLAYSCENE_H

@@ -43,6 +43,10 @@ public:
         moveX = value;
     }
 
+    float getMoveX() const {
+        return moveX;
+    }
+
     void setSpeed(float value) {
         speed = value;
     }
@@ -53,6 +57,9 @@ public:
 
     void setUseGravity(bool enabled) {
         useGravity = enabled;
+    }
+    float getVelocityY() const {
+        return velocityY;
     }
 
     bool isUsingGravity() const {

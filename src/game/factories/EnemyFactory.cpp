@@ -5,7 +5,10 @@
 #include "../components/core/SpriteComponent.h"
 #include "../components/core/PhysicsComponent.h"
 #include "../components/core/HealthComponent.h"
+#include "../components/core/AnimationComponent.h"
 #include "../components/gameplay/EnemyAIComponent.h"
+#include "../data/AssetPaths.h"
+#include "../data/AnimationClips.h"
 
 static EnemyType stringToEnemyType(const std::string& type) {
     if (type == "Patrol") return EnemyType::Patrol;
@@ -15,13 +18,27 @@ static EnemyType stringToEnemyType(const std::string& type) {
     return EnemyType::Patrol;
 }
 
-static const char* enemyTexturePath(EnemyType type) {
+static const AnimationPresets::AnimationSet& enemyAnimationSet(EnemyType type) {
     switch (type) {
-        case EnemyType::Boss:    return "../assets/boss1.png";
-        case EnemyType::Shooter: return "../assets/enemy.png";
-        case EnemyType::Flying:  return "../assets/enemy.png";
+        case EnemyType::Boss:
+            return AnimationPresets::Boss;
+        case EnemyType::Shooter:
+        case EnemyType::Flying:
         case EnemyType::Patrol:
-        default:                 return "../assets/enemy.png";
+        default:
+            return AnimationPresets::Enemy;
+    }
+}
+
+static const char* enemyInitialSpritesheet(EnemyType type) {
+    switch (type) {
+        case EnemyType::Boss:
+            return AssetPaths::BOSS_IDLE_SPRITESHEET;
+        case EnemyType::Shooter:
+        case EnemyType::Flying:
+        case EnemyType::Patrol:
+        default:
+            return AssetPaths::ENEMY_IDLE_SPRITESHEET;
     }
 }
 
@@ -33,12 +50,24 @@ Entity& EnemyFactory::createEnemy(Entity& entity,
                                   float patrolLeft,
                                   float patrolRight) {
     EnemyType type = stringToEnemyType(typeName);
+    const bool isBoss = (type == EnemyType::Boss);
+    const auto& animSet = enemyAnimationSet(type);
 
     entity.addComponent<EnemyTagComponent>();
-    entity.addComponent<TransformComponent>(startX, startY, 32.0f, 32.0f);
-    entity.addComponent<SpriteComponent>(assets.getTexture(enemyTexturePath(type)));
+    entity.addComponent<TransformComponent>(
+        startX,
+        startY,
+        static_cast<float>(animSet.frameWidth),
+        static_cast<float>(animSet.frameHeight)
+    );
+
+    // Start with idle sheet; AnimationSystem should swap textures later.
+    entity.addComponent<SpriteComponent>(
+        assets.getTexture(enemyInitialSpritesheet(type))
+    );
+
     entity.addComponent<PhysicsComponent>(100.0f, 900.0f, 450.0f, type != EnemyType::Flying);
-    entity.addComponent<HealthComponent>(type == EnemyType::Boss ? 20 : 3);
+    entity.addComponent<HealthComponent>(isBoss ? 20 : 3);
 
     auto& ai = entity.addComponent<EnemyAIComponent>(type, patrolLeft, patrolRight);
 
@@ -59,6 +88,12 @@ Entity& EnemyFactory::createEnemy(Entity& entity,
         ai.attackRange = 40.0f;
         ai.chaseRange = 220.0f;
     }
+
+    auto& anim = entity.addComponent<AnimationComponent>(
+        animSet.frameWidth,
+        animSet.frameHeight
+    );
+    AnimationPresets::applySet(anim, animSet);
 
     return entity;
 }

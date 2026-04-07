@@ -9,6 +9,7 @@
 #include "../../game/components/gameplay/EnemyAIComponent.h"
 #include "../../engine/resources/AssetManager.h"
 #include "../data/AssetPaths.h"
+#include "../../game/components/core/AnimationComponent.h"
 
 class EnemyFactory {
 public:
@@ -19,6 +20,8 @@ public:
                                float startY,
                                float patrolLeft,
                                float patrolRight);
+    
+
 };
 
 #endif //LASTCARRIAGE_ENEMYFACTORY_H

@@ -5,20 +5,31 @@
 #include "../components/core/SpriteComponent.h"
 #include "../components/core/PhysicsComponent.h"
 #include "../components/core/HealthComponent.h"
-#include "../components/gameplay/WeaponComponent.h"
 #include "../components/core/InputComponent.h"
+#include "../components/core/AnimationComponent.h"
+#include "../components/gameplay/WeaponComponent.h"
+#include "../data/AssetPaths.h"
+#include "../data/AnimationClips.h"
 
 Entity& PlayerFactory::createPlayer(Entity& entity,
-AssetManager& assets,
+                                    AssetManager& assets,
                                     float startX,
                                     float startY) {
     entity.addComponent<PlayerTagComponent>();
-    entity.addComponent<TransformComponent>(startX, startY, 32.0f, 32.0f);
-    entity.addComponent<SpriteComponent>(assets.getTexture(AssetPaths::PLAYER));
+    entity.addComponent<TransformComponent>(startX, startY, 228.0f, 192.0f);
+
+    // Start with idle sheet; AnimationSystem should swap textures later.
+    entity.addComponent<SpriteComponent>(
+        assets.getTexture(AssetPaths::PLAYER_IDLE_SPRITESHEET)
+    );
+
     entity.addComponent<PhysicsComponent>(200.0f);
     entity.addComponent<HealthComponent>(10);
     entity.addComponent<WeaponComponent>(6, 1.2f);
     entity.addComponent<InputComponent>();
+
+    auto& anim = entity.addComponent<AnimationComponent>(228, 192);
+    AnimationPresets::applySet(anim, AnimationPresets::Player);
 
     return entity;
 }

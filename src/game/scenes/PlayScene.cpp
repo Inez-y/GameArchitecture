@@ -105,6 +105,7 @@ void PlayScene::update(float dt) {
     movementSystem.update(manager, context, dt);
     combatSystem.update(manager, context, dt);
     itemSystem.update(manager, context);
+    animationSystem.update(manager, context, dt);
 
     manager.refresh();
 

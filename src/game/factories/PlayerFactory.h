@@ -6,6 +6,7 @@
 #include "../../engine/ecs/Entity.h"
 #include "../../engine/resources/AssetManager.h"
 #include "../../game/data/AssetPaths.h"
+#include "../../game/components/core/AnimationComponent.h"
 #include <SDL3/SDL.h>
 
 class PlayerFactory {
