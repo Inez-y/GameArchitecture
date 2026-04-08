@@ -43,24 +43,25 @@ void RenderSystem::render(Manager& manager, const GameContext& context) const {
 }
 
 void RenderSystem::renderDoors(Manager& manager, const GameContext& context) const {
-    for (auto& e : manager.getEntities()) {
-        if (!e->hasComponent<DoorTagComponent>()) {
-            continue;
-        }
-
-        auto& door = e->getComponent<DoorComponent>();
-        auto rect = e->getComponent<TransformComponent>().getRect();
-
-        if (!door.isActive()) {
-            continue;
-        }
-
-        rect.x -= context.camera->x;
-        rect.y -= context.camera->y;
-
-        SDL_SetRenderDrawColor(context.renderer, 0, 0, 255, 255);
-        SDL_RenderFillRect(context.renderer, &rect);
-    }
+    // Use this function to debugging door with actual blue frame
+    // for (auto& e : manager.getEntities()) {
+    //     if (!e->hasComponent<DoorTagComponent>()) {
+    //         continue;
+    //     }
+    //
+    //     auto& door = e->getComponent<DoorComponent>();
+    //     auto rect = e->getComponent<TransformComponent>().getRect();
+    //
+    //     if (!door.isActive()) {
+    //         continue;
+    //     }
+    //
+    //     rect.x -= context.camera->x;
+    //     rect.y -= context.camera->y;
+    //
+    //     SDL_SetRenderDrawColor(context.renderer, 0, 0, 255, 255);
+    //     SDL_RenderFillRect(context.renderer, &rect);
+    // }
 }
 
 void RenderSystem::renderItems(Manager& manager, const GameContext& context) const {

@@ -64,19 +64,19 @@ namespace AnimationPresets {
     };
 
     inline const EnemyAnimationSet BossPatrol{
-        {AssetPaths::BOSS_IDLE_SPRITESHEET,          0, 228, 192, 12, 0.12f, true},
-        {AssetPaths::BOSS_RUN_SPRITESHEET,           0, 228, 192, 10, 0.09f, true},
-        {AssetPaths::BOSS_ATTACK_PATROL_SPRITESHEET, 0, 228, 192, 14, 0.07f, false},
-        {AssetPaths::BOSS_HURT_SPRITESHEET,          0, 228, 192, 4,  0.10f, false},
-        {AssetPaths::BOSS_DEAD_SPRITESHEET,          0, 228, 192, 10, 0.14f, false}
+        {AssetPaths::BOSS_IDLE_SPRITESHEET,          0, 266, 203, 3990/266, 0.10f, true},
+        {AssetPaths::BOSS_RUN_SPRITESHEET,           0, 266, 203, 2128/266, 0.09f, true},
+        {AssetPaths::BOSS_ATTACK_PATROL_SPRITESHEET, 0, 266, 203, 5054/266, 0.07f, false},
+        {AssetPaths::BOSS_HURT_SPRITESHEET,          0, 266, 203, 532/266,  0.10f, false},
+        {AssetPaths::BOSS_DEAD_SPRITESHEET,          0, 266, 203, 1330/266, 0.14f, false}
     };
 
     inline const EnemyAnimationSet BossShooter{
-        {AssetPaths::BOSS_IDLE_SPRITESHEET,           0, 228, 192, 12, 0.12f, true},
-        {AssetPaths::BOSS_RUN_SPRITESHEET,            0, 228, 192, 10, 0.09f, true},
-        {AssetPaths::BOSS_ATTACK_SHOOTER_SPRITESHEET, 0, 228, 192, 14, 0.07f, false},
-        {AssetPaths::BOSS_HURT_SPRITESHEET,           0, 228, 192, 4,  0.10f, false},
-        {AssetPaths::BOSS_DEAD_SPRITESHEET,           0, 228, 192, 10, 0.14f, false}
+        {AssetPaths::BOSS_IDLE_SPRITESHEET,           0, 266, 203, 3990/266, 0.12f, true},
+        {AssetPaths::BOSS_RUN_SPRITESHEET,            0, 266, 203, 2128/266, 0.09f, true},
+        {AssetPaths::BOSS_ATTACK_SHOOTER_SPRITESHEET, 0, 266, 203, 1506/266, 0.07f, false},
+        {AssetPaths::BOSS_HURT_SPRITESHEET,           0, 266, 203, 532/266,  0.10f, false},
+        {AssetPaths::BOSS_DEAD_SPRITESHEET,           0, 266, 203, 1330/266, 0.14f, false}
     };
 
     inline const EnemyAnimationSet& enemySetForType(const std::string& typeName) {

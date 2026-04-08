@@ -17,12 +17,12 @@ public:
 
     Uint64 lastLeftTapTicks;
     Uint64 lastRightTapTicks;
-    Uint64 dashEndTicks;
+
     int dashDirection;
+    bool dashActive;
 
     float dashMoveMultiplier;
     Uint64 doubleTapWindowMs;
-    Uint64 dashDurationMs;
 
     bool previousLeftDown;
     bool previousRightDown;
@@ -32,11 +32,10 @@ public:
           weapon(nullptr),
           lastLeftTapTicks(0),
           lastRightTapTicks(0),
-          dashEndTicks(0),
           dashDirection(0),
+          dashActive(false),
           dashMoveMultiplier(2.6f),
           doubleTapWindowMs(250),
-          dashDurationMs(160),
           previousLeftDown(false),
           previousRightDown(false) {}
 
@@ -46,7 +45,7 @@ public:
     }
 
     bool isDashing() const {
-        return SDL_GetTicks() < dashEndTicks;
+        return dashActive;
     }
 
     int getDashDirection() const {
@@ -63,10 +62,11 @@ public:
         const bool jumpDown = keyStates[SDL_SCANCODE_W] || keyStates[SDL_SCANCODE_UP];
         const Uint64 now = SDL_GetTicks();
 
+        // Detect fresh double tap
         if (leftDown && !previousLeftDown) {
             if (now - lastLeftTapTicks <= doubleTapWindowMs) {
                 dashDirection = -1;
-                dashEndTicks = now + dashDurationMs;
+                dashActive = true;
             }
             lastLeftTapTicks = now;
         }
@@ -74,19 +74,26 @@ public:
         if (rightDown && !previousRightDown) {
             if (now - lastRightTapTicks <= doubleTapWindowMs) {
                 dashDirection = 1;
-                dashEndTicks = now + dashDurationMs;
+                dashActive = true;
             }
             lastRightTapTicks = now;
         }
 
+        // Stop dash as soon as the dash key is released
+        if (dashActive) {
+            if ((dashDirection < 0 && !leftDown) ||
+                (dashDirection > 0 && !rightDown)) {
+                dashActive = false;
+                dashDirection = 0;
+            }
+        }
+
         physics->moveX = 0.0f;
 
-        if (isDashing()) {
+        if (dashActive) {
             physics->moveX = static_cast<float>(dashDirection) * dashMoveMultiplier;
             weapon->facingDirection = dashDirection;
         } else {
-            dashDirection = 0;
-
             if (leftDown) {
                 physics->moveX = -1.0f;
                 weapon->facingDirection = -1;

@@ -26,12 +26,6 @@ bool StageManager::loadStage(Manager& manager,
     std::cout << "StageManager loading map=[" << mapPath
           << "] spawn=[" << spawnId << "]\n";
 
-    std::cout << "Current working directory: "
-              << std::filesystem::current_path() << "\n";
-
-    std::cout << "Exists? "
-              << std::filesystem::exists(mapPath) << "\n";
-
     std::string resolvedPath = mapPath;
 
     // If the door only gives a filename, build the full path automatically.
@@ -143,7 +137,13 @@ void StageManager::spawnStageEnemies(Manager& manager, GameContext& context) {
 }
 
 void StageManager::spawnStageItems(Manager& manager, GameContext& context) {
+    std::cout << "Item spawns loaded: " << context.map->getItemSpawns().size() << "\n";
+
     for (const ItemSpawn& spawn : context.map->getItemSpawns()) {
+        std::cout << "Spawning item type=[" << spawn.type
+                  << "] x=" << spawn.x
+                  << " y=" << spawn.y << "\n";
+
         Entity& item = manager.addEntity();
         ItemFactory::createItem(
             item,
