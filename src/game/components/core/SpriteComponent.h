@@ -48,10 +48,12 @@ public:
             transform->h
         };
 
+        SDL_FlipMode flipMode = flipX ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+
         if (useSourceRect) {
-            SDL_RenderTexture(renderer, texture, &srcRect, &dstRect);
+            SDL_RenderTextureRotated(renderer, texture, &srcRect, &dstRect, 0.0, nullptr, flipMode);
         } else {
-            SDL_RenderTexture(renderer, texture, nullptr, &dstRect);
+            SDL_RenderTextureRotated(renderer, texture, nullptr, &dstRect, 0.0, nullptr, flipMode);
         }
     }
 

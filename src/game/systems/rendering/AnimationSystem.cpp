@@ -8,6 +8,10 @@
 #include "../../components/gameplay/EnemyAIComponent.h"
 #include "../../components/identity/PlayerTagComponent.h"
 #include "../../components/identity/EnemyTagComponent.h"
+#include "../../components/gameplay/WeaponComponent.h"
+
+#include <cmath>
+#include <string>
 
 static void advanceAnimation(AnimationComponent& anim,
                              SpriteComponent& sprite,
@@ -19,10 +23,9 @@ static void advanceAnimation(AnimationComponent& anim,
     }
 
     SDL_Texture* texture = assets.getTexture(clip->spritesheetPath);
-    if (!texture) {
-        return;
+    if (texture && sprite.getTexture() != texture) {
+        sprite.setTexture(texture);
     }
-    sprite.setTexture(texture);
 
     anim.timer += dt;
 
@@ -50,6 +53,16 @@ static void advanceAnimation(AnimationComponent& anim,
     sprite.setSourceRect(srcRect);
 }
 
+static void playIfChanged(AnimationComponent& anim, const std::string& clipName, bool restart = false) {
+    if (!anim.hasClip(clipName)) {
+        return;
+    }
+
+    if (anim.getCurrentClipName() != clipName) {
+        anim.play(clipName, restart);
+    }
+}
+
 static void updatePlayerAnimation(Entity& entity) {
     if (!entity.hasComponent<AnimationComponent>() ||
         !entity.hasComponent<HealthComponent>()) {
@@ -60,34 +73,45 @@ static void updatePlayerAnimation(Entity& entity) {
     auto& health = entity.getComponent<HealthComponent>();
 
     if (health.isDead()) {
-        if (anim.hasClip("dead")) {
-            anim.play("dead");
-        }
+        playIfChanged(anim, "dead", true);
         return;
+    }
+
+    if (anim.getCurrentClipName() == "attack" && !anim.finished) {
+        return;
+    }
+
+    if (entity.hasComponent<WeaponComponent>()) {
+        auto& weapon = entity.getComponent<WeaponComponent>();
+        if (weapon.isAttacking()) {
+            playIfChanged(anim, "attack", true);
+            return;
+        }
     }
 
     if (entity.hasComponent<PhysicsComponent>()) {
         auto& physics = entity.getComponent<PhysicsComponent>();
 
+        const float enterRunThreshold = 0.20f;
+        const float exitRunThreshold = 0.08f;
+        const float absMoveX = std::fabs(physics.getMoveX());
+
+        std::string desiredClip = "idle";
+
         if (!physics.isGrounded()) {
-            if (anim.hasClip("jump")) {
-                anim.play("jump");
-            }
-            return;
+            desiredClip = "jump";
+        } else if (absMoveX > enterRunThreshold) {
+            desiredClip = "run";
+        } else if (anim.getCurrentClipName() == "run" && absMoveX > exitRunThreshold) {
+            desiredClip = "run";
         }
 
-        if (physics.getMoveX() != 0.0f) {
-            if (anim.hasClip("run")) {
-                anim.play("run");
-            }
-        } else {
-            if (anim.hasClip("idle")) {
-                anim.play("idle");
-            }
-        }
-    } else {
-        if (anim.hasClip("idle")) {
-            anim.play("idle");
+        playIfChanged(anim, desiredClip);
+
+        if (physics.getMoveX() < 0.0f) {
+            anim.flipX = true;
+        } else if (physics.getMoveX() > 0.0f) {
+            anim.flipX = false;
         }
     }
 }
@@ -103,43 +127,43 @@ static void updateEnemyAnimation(Entity& entity) {
     auto& ai = entity.getComponent<EnemyAIComponent>();
     auto& health = entity.getComponent<HealthComponent>();
 
-    if (health.isDead()) {
-        if (anim.hasClip("dead")) {
-            anim.play("dead");
+    if (ai.direction < 0) {
+        anim.flipX = true;
+    } else if (ai.direction > 0) {
+        anim.flipX = false;
+    }
+
+    if (health.isDead() || ai.state == EnemyState::Dead) {
+        if (anim.getCurrentClipName() != "dead") {
+            playIfChanged(anim, "dead", true);
         }
+        return;
+    }
+
+    if ((anim.getCurrentClipName() == "attack" || anim.getCurrentClipName() == "hurt") && !anim.finished) {
         return;
     }
 
     switch (ai.state) {
         case EnemyState::Idle:
-            if (anim.hasClip("idle")) {
-                anim.play("idle");
-            }
+            playIfChanged(anim, "idle");
             break;
 
         case EnemyState::Patrol:
         case EnemyState::Chase:
-            if (anim.hasClip("run")) {
-                anim.play("run");
-            }
+            playIfChanged(anim, "run");
             break;
 
         case EnemyState::Attack:
-            if (anim.hasClip("attack")) {
-                anim.play("attack");
-            }
+            playIfChanged(anim, "attack", true);
             break;
 
         case EnemyState::Hurt:
-            if (anim.hasClip("hurt")) {
-                anim.play("hurt");
-            }
+            playIfChanged(anim, "hurt", true);
             break;
 
         case EnemyState::Dead:
-            if (anim.hasClip("dead")) {
-                anim.play("dead");
-            }
+            playIfChanged(anim, "dead", true);
             break;
     }
 }
@@ -163,7 +187,6 @@ void AnimationSystem::update(Manager& manager, GameContext& context, float dt) {
 
         auto& sprite = e->getComponent<SpriteComponent>();
         auto& anim = e->getComponent<AnimationComponent>();
-
         advanceAnimation(anim, sprite, *context.assetManager, dt);
     }
 

@@ -15,13 +15,20 @@ public:
     float reloadTimer;
     float reloadDuration;
 
+    bool attacking;
+    float attackTimer;
+    float attackDuration;
+
     WeaponComponent(int maxAmmo = 6, float reloadDuration = 1.2f)
-        : facingDirection(1),
+        : facingDirection(1), // -1(left) 1(right)
           ammo(maxAmmo),
           maxAmmo(maxAmmo),
           reloading(false),
           reloadTimer(0.0f),
-          reloadDuration(reloadDuration) {}
+          reloadDuration(reloadDuration),
+          attacking(false),
+          attackTimer(0.0f),
+          attackDuration(0.35f) {}
 
     void update(float deltaTime) {
         if (reloading) {
@@ -33,20 +40,39 @@ public:
                 reloadTimer = 0.0f;
             }
         }
-    }
 
-    bool canShoot() const {
-        return !reloading && ammo > 0;
-    }
+        if (attacking) {
+            attackTimer += deltaTime;
 
-    void consumeAmmo() {
-        if (ammo > 0) {
-            ammo--;
+            if (attackTimer >= attackDuration) {
+                attacking = false;
+                attackTimer = 0.0f;
+            }
         }
     }
 
+    bool canShoot() const {
+        return !reloading && !attacking && ammo > 0;
+    }
+
+    void consumeAmmo() {
+        if (ammo > 0 && !attacking) {
+            ammo--;
+            startAttack();
+        }
+    }
+
+    void startAttack() {
+        if (attacking) {
+            return;
+        }
+
+        attacking = true;
+        attackTimer = 0.0f;
+    }
+
     void startReload() {
-        if (reloading) {
+        if (reloading || attacking) {
             return;
         }
 
@@ -62,6 +88,10 @@ public:
         return reloading;
     }
 
+    bool isAttacking() const {
+        return attacking;
+    }
+
     int getAmmo() const {
         return ammo;
     }
@@ -75,4 +105,4 @@ public:
     }
 };
 
-#endif //LASTCARRIAGE_WEAPONCOMPONENT_H
+#endif // LASTCARRIAGE_WEAPONCOMPONENT_H

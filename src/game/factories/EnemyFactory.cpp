@@ -14,32 +14,28 @@ static EnemyType stringToEnemyType(const std::string& type) {
     if (type == "Patrol") return EnemyType::Patrol;
     if (type == "Shooter") return EnemyType::Shooter;
     if (type == "Flying") return EnemyType::Flying;
-    if (type == "Boss") return EnemyType::Boss;
+    if (type == "Boss" || type == "BossPatrol" || type == "BossShooter") return EnemyType::Boss;
     return EnemyType::Patrol;
 }
 
-static const AnimationPresets::EnemyAnimationSet& enemyAnimationSet(EnemyType type) {
-    switch (type) {
-        case EnemyType::Boss:
-            return AnimationPresets::Boss;
-        case EnemyType::Shooter:
-        case EnemyType::Flying:
-        case EnemyType::Patrol:
-        default:
-            return AnimationPresets::Enemy;
+static const AnimationPresets::EnemyAnimationSet& enemyAnimationSet(const std::string& typeName) {
+    if (typeName == "Shooter") {
+        return AnimationPresets::EnemyShooter;
     }
+    if (typeName == "Flying") {
+        return AnimationPresets::EnemyFlying;
+    }
+    if (typeName == "BossShooter") {
+        return AnimationPresets::BossShooter;
+    }
+    if (typeName == "Boss" || typeName == "BossPatrol") {
+        return AnimationPresets::BossPatrol;
+    }
+    return AnimationPresets::EnemyPatrol;
 }
 
-static const char* enemyInitialSpritesheet(EnemyType type) {
-    switch (type) {
-        case EnemyType::Boss:
-            return AssetPaths::BOSS_IDLE_SPRITESHEET;
-        case EnemyType::Shooter:
-        case EnemyType::Flying:
-        case EnemyType::Patrol:
-        default:
-            return AssetPaths::ENEMY_IDLE_SPRITESHEET;
-    }
+static std::string enemyInitialSpritesheet(const std::string& typeName) {
+    return enemyAnimationSet(typeName).idle.spritesheetPath;
 }
 
 Entity& EnemyFactory::createEnemy(Entity& entity,
@@ -49,14 +45,12 @@ Entity& EnemyFactory::createEnemy(Entity& entity,
                                   float startY,
                                   float patrolLeft,
                                   float patrolRight) {
-    EnemyType type = stringToEnemyType(typeName);
+    const EnemyType type = stringToEnemyType(typeName);
     const bool isBoss = (type == EnemyType::Boss);
-    const auto& animSet = enemyAnimationSet(type);
+    const auto& animSet = enemyAnimationSet(typeName);
 
     entity.addComponent<EnemyTagComponent>();
 
-    // Use idle clip size as the initial source-frame size.
-    // You can scale this down if the art is too large in-game.
     entity.addComponent<TransformComponent>(
         startX,
         startY,
@@ -65,7 +59,7 @@ Entity& EnemyFactory::createEnemy(Entity& entity,
     );
 
     entity.addComponent<SpriteComponent>(
-        assets.getTexture(enemyInitialSpritesheet(type))
+        assets.getTexture(enemyInitialSpritesheet(typeName))
     );
 
     entity.addComponent<PhysicsComponent>(100.0f, 900.0f, 450.0f, type != EnemyType::Flying);

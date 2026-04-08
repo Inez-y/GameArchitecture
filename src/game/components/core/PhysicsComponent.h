@@ -44,6 +44,10 @@ public:
     }
 
     float getMoveX() const {
+        // Animation flickers
+        if (std::fabs(moveX) < 0.10f) {
+            return moveX == 0.0f;
+        }
         return moveX;
     }
 

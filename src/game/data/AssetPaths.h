@@ -11,7 +11,7 @@ namespace AssetPaths {
     constexpr const char* UI_FONT = "../assets/fonts/PixelifySans_Font.ttf";
 
     constexpr const char* PLAYER = "../assets/animations/player_idle/000.png";
-    constexpr const char* ENEMY = "../assets/enemy.png";
+    constexpr const char* ENEMY = "../assets/animations/enemy_idle/012.png";
     constexpr const char* BOSS = "../assets/boss1.png";
     constexpr const char* ITEM_COIN = "../assets/coin.png";
     constexpr const char* ITEM_HEALTH = "../assets/health.png";
@@ -25,39 +25,21 @@ namespace AssetPaths {
     constexpr const char* PLAYER_JUMP_SPRITESHEET   = "../assets/animations/player_jump/spritesheet.png";
 
     // Enemy animation sheets
-    constexpr const char* ENEMY_IDLE_SPRITESHEET   = "../assets/animations/player_idle/spritesheet.png";
-    constexpr const char* ENEMY_RUN_SPRITESHEET    = "../assets/animations/player_idle/spritesheet.png";
-    constexpr const char* ENEMY_ATTACK_SPRITESHEET = "../assets/animations/player_idle/spritesheet.png";
-    constexpr const char* ENEMY_HURT_SPRITESHEET   = "../assets/animations/player_idle/spritesheet.png";
-    constexpr const char* ENEMY_DEAD_SPRITESHEET   = "../assets/animations/player_idle/spritesheet.png";
+    constexpr const char* ENEMY_IDLE_SPRITESHEET   = "../assets/animations/enemy_idle/spritesheet.png";
+    constexpr const char* ENEMY_RUN_SPRITESHEET    = "../assets/animations/enemy_run/spritesheet.png";
+    constexpr const char* ENEMY_ATTACK_FLYING_SPRITESHEET = "../assets/animations/enemy_attack_flying/spritesheet.png";
+    constexpr const char* ENEMY_ATTACK_SHOOTER_SPRITESHEET = "../assets/animations/enemy_attack_shooter/spritesheet.png";
+    constexpr const char* ENEMY_ATTACK_PATROL_SPRITESHEET = "../assets/animations/enemy_attack_shooter/spritesheet.png";
+    constexpr const char* ENEMY_HURT_SPRITESHEET   = "../assets/animations/enemy_hurt/spritesheet.png";
+    constexpr const char* ENEMY_DEAD_SPRITESHEET   = "../assets/animations/enemy_dead/spritesheet.png";
 
     // Boss animation sheets
-    constexpr const char* BOSS_IDLE_SPRITESHEET   = "../assets/animations/player_idle/spritesheet.png";
-    constexpr const char* BOSS_RUN_SPRITESHEET    = "../assets/animations/player_idle/spritesheet.png";
-    constexpr const char* BOSS_ATTACK_SPRITESHEET = "../assets/animations/player_idle/spritesheet.png";
-    constexpr const char* BOSS_HURT_SPRITESHEET   = "../assets/animations/player_idle/spritesheet.png";
-    constexpr const char* BOSS_DEAD_SPRITESHEET   = "../assets/animations/player_idle/spritesheet.png";
-
-    // // Player animation sheets
-    // constexpr const char* PLAYER_IDLE_SPRITESHEET   = "../assets/animations/player_idle/spritesheet.png";
-    // constexpr const char* PLAYER_RUN_SPRITESHEET    = "../assets/animations/player_run/spritesheet.png";
-    // constexpr const char* PLAYER_ATTACK_SPRITESHEET = "../assets/animations/player_attack/spritesheet.png";
-    // constexpr const char* PLAYER_HURT_SPRITESHEET   = "../assets/animations/player_hurt/spritesheet.png";
-    // constexpr const char* PLAYER_DEAD_SPRITESHEET   = "../assets/animations/player_dead/spritesheet.png";
-    //
-    // // Enemy animation sheets
-    // constexpr const char* ENEMY_IDLE_SPRITESHEET   = "../assets/animations/enemy_idle/spritesheet.png";
-    // constexpr const char* ENEMY_RUN_SPRITESHEET    = "../assets/animations/enemy_run/spritesheet.png";
-    // constexpr const char* ENEMY_ATTACK_SPRITESHEET = "../assets/animations/enemy_attack/spritesheet.png";
-    // constexpr const char* ENEMY_HURT_SPRITESHEET   = "../assets/animations/enemy_hurt/spritesheet.png";
-    // constexpr const char* ENEMY_DEAD_SPRITESHEET   = "../assets/animations/enemy_dead/spritesheet.png";
-    //
-    // // Boss animation sheets
-    // constexpr const char* BOSS_IDLE_SPRITESHEET   = "../assets/animations/boss_idle/spritesheet.png";
-    // constexpr const char* BOSS_RUN_SPRITESHEET    = "../assets/animations/boss_run/spritesheet.png";
-    // constexpr const char* BOSS_ATTACK_SPRITESHEET = "../assets/animations/boss_attack/spritesheet.png";
-    // constexpr const char* BOSS_HURT_SPRITESHEET   = "../assets/animations/boss_hurt/spritesheet.png";
-    // constexpr const char* BOSS_DEAD_SPRITESHEET   = "../assets/animations/boss_dead/spritesheet.png";
+    constexpr const char* BOSS_IDLE_SPRITESHEET   = "../assets/animations/boss_idle/spritesheet.png";
+    constexpr const char* BOSS_RUN_SPRITESHEET    = "../assets/animations/boss_run/spritesheet.png";
+    constexpr const char* BOSS_ATTACK_PATROL_SPRITESHEET = "../assets/animations/boss_attack_patrol/spritesheet.png";
+    constexpr const char* BOSS_ATTACK_SHOOTER_SPRITESHEET = "../assets/animations/boss_attack_shooter/spritesheet.png";
+    constexpr const char* BOSS_HURT_SPRITESHEET   = "../assets/animations/boss_hurt/spritesheet.png";
+    constexpr const char* BOSS_DEAD_SPRITESHEET   = "../assets/animations/boss_dead/spritesheet.png";
 
 }
 

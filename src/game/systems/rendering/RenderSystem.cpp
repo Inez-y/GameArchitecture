@@ -11,8 +11,8 @@
 #include "../../components/core/TransformComponent.h"
 #include "../../components/core/SpriteComponent.h"
 #include "../../components/identity/PlayerTagComponent.h"
-#include "../../components/core/HealthComponent.h"
 #include "../../components/gameplay/WeaponComponent.h"
+#include "../../components/core/AnimationComponent.h"
 
 void RenderSystem::render(Manager& manager, const GameContext& context) const {
     if (!context.renderer || !context.camera) {
@@ -32,12 +32,14 @@ void RenderSystem::render(Manager& manager, const GameContext& context) const {
     renderBullets(manager, context);
     renderHUD(context);
 
-    // Render player
     if (context.playerEntity &&
         context.playerEntity->hasComponent<SpriteComponent>()) {
-        context.playerEntity->getComponent<SpriteComponent>().draw(context.renderer, cameraRect);
+        bool flipX = false;
+        if (context.playerEntity->hasComponent<AnimationComponent>()) {
+            flipX = context.playerEntity->getComponent<AnimationComponent>().flipX;
         }
-
+        context.playerEntity->getComponent<SpriteComponent>().draw(context.renderer, cameraRect, flipX);
+    }
 }
 
 void RenderSystem::renderDoors(Manager& manager, const GameContext& context) const {
@@ -68,12 +70,16 @@ void RenderSystem::renderItems(Manager& manager, const GameContext& context) con
         if (!e->hasComponent<ItemTagComponent>() ||
             !e->hasComponent<ItemComponent>() ||
             !e->hasComponent<SpriteComponent>()) {
-                continue;
+            continue;
         }
 
         auto& item = e->getComponent<ItemComponent>();
         if (item.isActive()) {
-            e->getComponent<SpriteComponent>().draw(context.renderer, cameraRect);
+            bool flipX = false;
+            if (e->hasComponent<AnimationComponent>()) {
+                flipX = e->getComponent<AnimationComponent>().flipX;
+            }
+            e->getComponent<SpriteComponent>().draw(context.renderer, cameraRect, flipX);
         }
     }
 }
@@ -83,15 +89,16 @@ void RenderSystem::renderEnemies(Manager& manager, const GameContext& context) c
 
     for (auto& e : manager.getEntities()) {
         if (!e->hasComponent<EnemyTagComponent>() ||
-            !e->hasComponent<HealthComponent>() ||
             !e->hasComponent<SpriteComponent>()) {
             continue;
-            }
-
-        auto& health = e->getComponent<HealthComponent>();
-        if (!health.isDead()) {
-            e->getComponent<SpriteComponent>().draw(context.renderer, cameraRect);
         }
+
+        bool flipX = false;
+        if (e->hasComponent<AnimationComponent>()) {
+            flipX = e->getComponent<AnimationComponent>().flipX;
+        }
+
+        e->getComponent<SpriteComponent>().draw(context.renderer, cameraRect, flipX);
     }
 }
 
@@ -100,7 +107,7 @@ void RenderSystem::renderBullets(Manager& manager, const GameContext& context) c
         if (!e->hasComponent<BulletTagComponent>() ||
             !e->hasComponent<TransformComponent>() ||
             !e->hasComponent<BulletComponent>()) {
-                continue;
+            continue;
         }
 
         auto& transform = e->getComponent<TransformComponent>();
@@ -132,13 +139,12 @@ void RenderSystem::renderHUD(const GameContext& context) const {
     if (!context.playerEntity->hasComponent<HealthComponent>() ||
         !context.playerEntity->hasComponent<WeaponComponent>()) {
         return;
-        }
+    }
 
     auto& health = context.playerEntity->getComponent<HealthComponent>();
     auto& weapon = context.playerEntity->getComponent<WeaponComponent>();
 
     std::string hpString = "HP: " + std::to_string(health.getHP());
-
     std::string ammoString = "Ammo: " + std::to_string(weapon.getAmmo()) +
                              "/" + std::to_string(weapon.getMaxAmmo());
 
