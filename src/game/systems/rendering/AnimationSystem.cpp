@@ -5,6 +5,7 @@
 #include "../../components/core/SpriteComponent.h"
 #include "../../components/core/PhysicsComponent.h"
 #include "../../components/core/HealthComponent.h"
+#include "../../components/core/InputComponent.h"
 #include "../../components/gameplay/EnemyAIComponent.h"
 #include "../../components/identity/PlayerTagComponent.h"
 #include "../../components/identity/EnemyTagComponent.h"
@@ -53,19 +54,20 @@ static void advanceAnimation(AnimationComponent& anim,
     sprite.setSourceRect(srcRect);
 }
 
-static void playIfChanged(AnimationComponent& anim, const std::string& clipName, bool restart = false) {
-    if (!anim.hasClip(clipName)) {
+static void playIfChanged(AnimationComponent& anim, const std::string& name, bool restart = false) {
+    if (!anim.hasClip(name)) {
         return;
     }
 
-    if (anim.getCurrentClipName() != clipName) {
-        anim.play(clipName, restart);
+    if (anim.getCurrentClipName() != name) {
+        anim.play(name, restart);
     }
 }
 
 static void updatePlayerAnimation(Entity& entity) {
     if (!entity.hasComponent<AnimationComponent>() ||
-        !entity.hasComponent<HealthComponent>()) {
+        !entity.hasComponent<HealthComponent>() ||
+            !entity.hasComponent<WeaponComponent>()){
         return;
     }
 
@@ -77,14 +79,49 @@ static void updatePlayerAnimation(Entity& entity) {
         return;
     }
 
+    if (entity.hasComponent<PhysicsComponent>()) {
+        auto& physics = entity.getComponent<PhysicsComponent>();
+        if (physics.getMoveX() < 0.0f) {
+            anim.flipX = true;
+        } else if (physics.getMoveX() > 0.0f) {
+            anim.flipX = false;
+        }
+    }
+
     if (anim.getCurrentClipName() == "attack" && !anim.finished) {
+        return;
+    }
+
+    if (anim.getCurrentClipName() == "dash" && !anim.finished) {
         return;
     }
 
     if (entity.hasComponent<WeaponComponent>()) {
         auto& weapon = entity.getComponent<WeaponComponent>();
+
+        if (weapon.isReloading()) {
+            if (anim.hasClip("reload")) {
+                if (anim.getCurrentClipName() != "reload") {
+                    anim.play("reload", true);
+                }
+            }
+            return;
+        }
+
         if (weapon.isAttacking()) {
-            playIfChanged(anim, "attack", true);
+            if (anim.hasClip("attack")) {
+                if (anim.getCurrentClipName() != "attack") {
+                    anim.play("attack", true);
+                }
+            }
+            return;
+        }
+    }
+
+    if (entity.hasComponent<InputComponent>()) {
+        auto& input = entity.getComponent<InputComponent>();
+        if (input.isDashing()) {
+            playIfChanged(anim, "dash", true);
             return;
         }
     }
@@ -107,12 +144,6 @@ static void updatePlayerAnimation(Entity& entity) {
         }
 
         playIfChanged(anim, desiredClip);
-
-        if (physics.getMoveX() < 0.0f) {
-            anim.flipX = true;
-        } else if (physics.getMoveX() > 0.0f) {
-            anim.flipX = false;
-        }
     }
 }
 
@@ -133,14 +164,14 @@ static void updateEnemyAnimation(Entity& entity) {
         anim.flipX = false;
     }
 
-    if (health.isDead() || ai.state == EnemyState::Dead) {
-        if (anim.getCurrentClipName() != "dead") {
-            playIfChanged(anim, "dead", true);
-        }
+    if (health.isDead()) {
+        playIfChanged(anim, "dead", true);
         return;
     }
 
-    if ((anim.getCurrentClipName() == "attack" || anim.getCurrentClipName() == "hurt") && !anim.finished) {
+    if ((anim.getCurrentClipName() == "attack" ||
+         anim.getCurrentClipName() == "hurt" ||
+         anim.getCurrentClipName() == "dead") && !anim.finished) {
         return;
     }
 
@@ -187,6 +218,7 @@ void AnimationSystem::update(Manager& manager, GameContext& context, float dt) {
 
         auto& sprite = e->getComponent<SpriteComponent>();
         auto& anim = e->getComponent<AnimationComponent>();
+
         advanceAnimation(anim, sprite, *context.assetManager, dt);
     }
 

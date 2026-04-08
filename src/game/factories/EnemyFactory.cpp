@@ -20,10 +20,10 @@ static EnemyType stringToEnemyType(const std::string& type) {
 
 static const AnimationPresets::EnemyAnimationSet& enemyAnimationSet(const std::string& typeName) {
     if (typeName == "Shooter") {
-        return AnimationPresets::EnemyShooter;
+        return AnimationPresets::ShooterEnemy;
     }
     if (typeName == "Flying") {
-        return AnimationPresets::EnemyFlying;
+        return AnimationPresets::FlyingEnemy;
     }
     if (typeName == "BossShooter") {
         return AnimationPresets::BossShooter;
@@ -31,7 +31,7 @@ static const AnimationPresets::EnemyAnimationSet& enemyAnimationSet(const std::s
     if (typeName == "Boss" || typeName == "BossPatrol") {
         return AnimationPresets::BossPatrol;
     }
-    return AnimationPresets::EnemyPatrol;
+    return AnimationPresets::PatrolEnemy;
 }
 
 static std::string enemyInitialSpritesheet(const std::string& typeName) {

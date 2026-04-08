@@ -18,6 +18,7 @@ bool PlayScene::init() {
     context.renderer = renderer;
     context.assetManager = &assetManager;
     context.tilesetTexture = tilesetTexture;
+    context.backgroundTexture = assetManager.getTexture(AssetPaths::MAP_1_BACKGROUND);
     context.uiFont = assetManager.getFont(AssetPaths::UI_FONT, 24);
     context.camera = &camera;
     context.map = &map;
@@ -35,6 +36,11 @@ bool PlayScene::init() {
 
     if (!context.uiFont) {
         std::cout << "PlayScene: failed to load UI font.\n";
+        return false;
+    }
+
+    if (!context.backgroundTexture) {
+        std::cout << "PlayScene: failed to load map background texture.\n";
         return false;
     }
 
@@ -87,7 +93,6 @@ bool PlayScene::handleEvents() {
         }
     }
 
-
     if (context.playerEntity && context.playerEntity->hasComponent<InputComponent>()) {
         const bool* keyStates = SDL_GetKeyboardState(nullptr);
         auto& input = context.playerEntity->getComponent<InputComponent>();
@@ -122,6 +127,16 @@ void PlayScene::update(float dt) {
         context.requestedSpawnId = "default";
 
         if (!nextStage.empty()) {
+            if (nextStage == AssetPaths::MAP_1_BOSS) {
+                context.backgroundTexture = assetManager.getTexture(AssetPaths::MAP_1_BOSS_BACKGROUND);
+            } else {
+                context.backgroundTexture = assetManager.getTexture(AssetPaths::MAP_1_BACKGROUND);
+            }
+
+            if (!context.backgroundTexture) {
+                std::cout << "Failed to load background for stage=[" << nextStage << "]\n";
+            }
+
             if (!stageManager.loadStage(manager, context, nextStage, nextSpawn)) {
                 std::cout << "Stage transition failed for map=[" << nextStage
                           << "] spawn=[" << nextSpawn << "]\n";
@@ -136,8 +151,17 @@ void PlayScene::render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
+    // Draw screenshot background first
+    if (context.backgroundTexture) {
+        SDL_FRect bgRect{0.0f, 0.0f, camera.w, camera.h};
+        SDL_RenderTexture(renderer, context.backgroundTexture, nullptr, &bgRect);
+    }
+
+    // Then draw tile map and entities on top
     SDL_FRect cameraRect{camera.x, camera.y, camera.w, camera.h};
-    map.render(renderer, tilesetTexture, cameraRect);
+
+    // Skip rendering the old tileset
+    // map.render(renderer, tilesetTexture, cameraRect);
 
     renderSystem.render(manager, context);
     SDL_RenderPresent(renderer);
@@ -150,6 +174,7 @@ void PlayScene::clean() {
     context.assetManager = nullptr;
     context.renderer = nullptr;
     context.tilesetTexture = nullptr;
+    context.backgroundTexture = nullptr;
     context.uiFont = nullptr;
     tilesetTexture = nullptr;
 }

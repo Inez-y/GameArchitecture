@@ -1,5 +1,5 @@
 /**
- * Shared state container
+* Shared state container
  */
 #pragma once
 
@@ -25,7 +25,9 @@ struct BulletSpawnRequest {
 struct GameContext {
     SDL_Renderer* renderer = nullptr;
     AssetManager* assetManager = nullptr;
+
     SDL_Texture* tilesetTexture = nullptr;
+    SDL_Texture* backgroundTexture = nullptr;   // NEW
     TTF_Font* uiFont = nullptr;
 
     Camera* camera = nullptr;

@@ -7,22 +7,26 @@ namespace AssetPaths {
     constexpr const char* TILESET = "../assets/maps/tileset.png";
     constexpr const char* MAP_1 = "../assets/maps/map1.tmx";
     constexpr const char* MAP_1_BOSS = "../assets/maps/map1_boss.tmx";
+    constexpr const char* MAP_1_BACKGROUND = "../assets/maps/map1_background.png";
+    constexpr const char* MAP_1_BOSS_BACKGROUND = "../assets/maps/map1_boss_background.png";
 
     constexpr const char* UI_FONT = "../assets/fonts/PixelifySans_Font.ttf";
 
     constexpr const char* PLAYER = "../assets/animations/player_idle/000.png";
     constexpr const char* ENEMY = "../assets/animations/enemy_idle/012.png";
-    constexpr const char* BOSS = "../assets/boss1.png";
+    constexpr const char* BOSS = "../assets/animations/boss_idle/000.png";
     constexpr const char* ITEM_COIN = "../assets/coin.png";
     constexpr const char* ITEM_HEALTH = "../assets/health.png";
 
     // Player animation sheets
     constexpr const char* PLAYER_IDLE_SPRITESHEET   = "../assets/animations/player_idle/spritesheet.png";
     constexpr const char* PLAYER_RUN_SPRITESHEET    = "../assets/animations/player_run/spritesheet.png";
+    constexpr const char* PLAYER_DASH_SPRITESHEET   = "../assets/animations/player_dash/spritesheet.png";
     constexpr const char* PLAYER_ATTACK_SPRITESHEET = "../assets/animations/player_attack/spritesheet.png";
     constexpr const char* PLAYER_HURT_SPRITESHEET   = "../assets/animations/player_hurt/spritesheet.png";
     constexpr const char* PLAYER_DEAD_SPRITESHEET   = "../assets/animations/player_dead/spritesheet.png";
     constexpr const char* PLAYER_JUMP_SPRITESHEET   = "../assets/animations/player_jump/spritesheet.png";
+    constexpr const char* PLAYER_RELOAD_SPRITESHEET   = "../assets/animations/player_reload/spritesheet.png";
 
     // Enemy animation sheets
     constexpr const char* ENEMY_IDLE_SPRITESHEET   = "../assets/animations/enemy_idle/spritesheet.png";

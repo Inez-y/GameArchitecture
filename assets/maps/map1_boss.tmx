@@ -11,7 +11,7 @@
      nextlayerid="7"
      nextobjectid="501">
 
- <tileset firstgid="1" source="tileset.tsx"/>
+<!--  <tileset firstgid="1" source="tileset.tsx"/> -->
 
  <layer id="1" name="Terrain Layer" width="40" height="20">
   <data encoding="csv">
@@ -68,7 +68,7 @@
 </objectgroup>
 
 <objectgroup id="6" name="Door Layer">
-  <object id="500" name="DoorToMap1" x="200" y="600" width="32" height="64">
+  <object id="500" name="DoorToMap1" x="200" y="1300" width="32" height="64">
     <properties>
       <property name="targetMap" type="string" value="../assets/Maps/map1.tmx"/>
     </properties>
