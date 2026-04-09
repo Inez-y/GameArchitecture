@@ -59,6 +59,15 @@ This architecture is visible in the project structure and class responsibilities
 
 The map pipeline is split so that `MapLoader` parses TMX data, `MapData` stores it, `Map` exposes runtime access and rendering, and `StageManager` converts map content into ECS entities such as doors, enemies, items, and player spawn positions. 
 
+### High-Level Architecture Diagram
+![img.png](readme_images/highlevel.png)
+
+### ECS Class Diagram
+![img.png](readme_images/ecs.png)
+
+### Sequence Diagram for Frame Update
+![img.png](readme_images/sequence.png)
+
 ---
 
 ## Project Structure
@@ -262,7 +271,7 @@ Separating parsing (`MapLoader`) from runtime access/rendering (`Map`) improves 
 
 ## Code Quality Goals
 
-The project emphasizes:
+This project emphasizes:
 
 * modularity
 * separation of concerns
