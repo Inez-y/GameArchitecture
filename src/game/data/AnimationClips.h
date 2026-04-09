@@ -40,27 +40,27 @@ namespace AnimationPresets {
     };
 
     inline const EnemyAnimationSet PatrolEnemy{
-        {AssetPaths::ENEMY_IDLE_SPRITESHEET,          0, 228, 192, 12, 0.10f, true},
-        {AssetPaths::ENEMY_RUN_SPRITESHEET,           0, 228, 192, 12, 0.08f, true},
-        {AssetPaths::ENEMY_ATTACK_PATROL_SPRITESHEET, 0, 228, 192, 8,  0.07f, false},
-        {AssetPaths::ENEMY_HURT_SPRITESHEET,          0, 228, 192, 4,  0.10f, false},
-        {AssetPaths::ENEMY_DEAD_SPRITESHEET,          0, 228, 192, 8,  0.12f, false}
+        {AssetPaths::ENEMY_IDLE_SPRITESHEET,          0, 235, 218, 1410/235, 0.20f, true},
+        {AssetPaths::ENEMY_RUN_SPRITESHEET,           0, 235, 218, 1410/235, 0.20f, true},
+        {AssetPaths::ENEMY_ATTACK_PATROL_SPRITESHEET, 0, 235, 218, 1410/235,  0.15f, false},
+        {AssetPaths::ENEMY_HURT_SPRITESHEET,          0, 235, 218, 2,  0.05f, false},
+        {AssetPaths::ENEMY_DEAD_SPRITESHEET,          0, 235, 218, 5,  0.12f, false}
     };
 
     inline const EnemyAnimationSet ShooterEnemy{
-        {AssetPaths::ENEMY_IDLE_SPRITESHEET,           0, 228, 192, 12, 0.10f, true},
-        {AssetPaths::ENEMY_RUN_SPRITESHEET,            0, 228, 192, 12, 0.08f, true},
-        {AssetPaths::ENEMY_ATTACK_SHOOTER_SPRITESHEET, 0, 228, 192, 8,  0.07f, false},
-        {AssetPaths::ENEMY_HURT_SPRITESHEET,           0, 228, 192, 4,  0.10f, false},
-        {AssetPaths::ENEMY_DEAD_SPRITESHEET,           0, 228, 192, 8,  0.12f, false}
+                    {AssetPaths::ENEMY_IDLE_SPRITESHEET,          0, 235, 218, 1410/235, 0.20f, true},
+        {AssetPaths::ENEMY_RUN_SPRITESHEET,            0, 235, 218, 1410/235, 0.20f, true},
+        {AssetPaths::ENEMY_ATTACK_SHOOTER_SPRITESHEET, 0, 235, 218, 1410/235,  0.15f, false},
+        {AssetPaths::ENEMY_HURT_SPRITESHEET,           0, 235, 218, 2,  0.05f, false},
+        {AssetPaths::ENEMY_DEAD_SPRITESHEET,           0, 235, 218, 5,  0.12f, false}
     };
 
     inline const EnemyAnimationSet FlyingEnemy{
-        {AssetPaths::ENEMY_IDLE_SPRITESHEET,          0, 228, 192, 12, 0.10f, true},
-        {AssetPaths::ENEMY_RUN_SPRITESHEET,           0, 228, 192, 12, 0.08f, true},
-        {AssetPaths::ENEMY_ATTACK_FLYING_SPRITESHEET, 0, 228, 192, 8,  0.07f, false},
-        {AssetPaths::ENEMY_HURT_SPRITESHEET,          0, 228, 192, 4,  0.10f, false},
-        {AssetPaths::ENEMY_DEAD_SPRITESHEET,          0, 228, 192, 8,  0.12f, false}
+            {AssetPaths::ENEMY_IDLE_SPRITESHEET,          0, 235, 218, 1410/235, 0.20f, true},
+        {AssetPaths::ENEMY_RUN_SPRITESHEET,           0, 235, 218, 1410/235, 0.20f, true},
+        {AssetPaths::ENEMY_ATTACK_FLYING_SPRITESHEET, 0, 235, 218, 2110/235,  0.15f, false},
+        {AssetPaths::ENEMY_HURT_SPRITESHEET,          0, 235, 218, 2,  0.05f, false},
+        {AssetPaths::ENEMY_DEAD_SPRITESHEET,          0, 235, 218, 5,  0.12f, false}
     };
 
     inline const EnemyAnimationSet BossPatrol{

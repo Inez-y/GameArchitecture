@@ -145,7 +145,7 @@ void EnemyMovementLogic::updateShooterEnemy(TransformComponent& transform,
                 ai.damageAppliedThisAttack = true;
                 ai.shotThisFrame = true;
             }
-            if (ai.attackTimer >= 1.0f) {
+            if (ai.attackTimer >= ai.attackDuration) {
                 ai.changeState(EnemyState::Idle);
             }
             break;

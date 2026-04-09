@@ -73,12 +73,12 @@ public:
           stopChaseRange(260.0f),
           attackRange(40.0f),
           attackTimer(0.0f),
-          attackDuration(0.6f),
+          attackDuration(0.8f),
           damageAppliedThisAttack(false),
           attackHitThisFrame(false),
           shotThisFrame(false),
           hurtTimer(0.0f),
-          hurtDuration(0.35f),
+          hurtDuration(0.5f),
           currentBossAttack(BossAttackType::None),
           bossAttackTimer(0.0f),
           bossAttackCooldown(1.5f),
@@ -90,35 +90,44 @@ public:
     }
 
     void configureByType() {
-        // Defaults
         state = EnemyState::Patrol;
         attackRange = 40.0f;
         chaseRange = 220.0f;
         stopChaseRange = 260.0f;
+        attackDuration = 0.8f;
+        hurtDuration = 0.45f;
 
         if (type == EnemyType::Boss) {
             state = EnemyState::Idle;
             attackRange = 60.0f;
             chaseRange = 260.0f;
             stopChaseRange = 300.0f;
+            attackDuration = 1.0f;
+            hurtDuration = 0.5f;
         }
         else if (type == EnemyType::Shooter) {
             state = EnemyState::Idle;
             attackRange = 250.0f;
             chaseRange = 300.0f;
             stopChaseRange = 340.0f;
+            attackDuration = 1.0f;
+            hurtDuration = 0.45f;
         }
         else if (type == EnemyType::Flying) {
             state = EnemyState::Chase;
             attackRange = 60.0f;
             chaseRange = 260.0f;
             stopChaseRange = 320.0f;
+            attackDuration = 0.75f;
+            hurtDuration = 0.4f;
         }
         else {
             state = EnemyState::Patrol;
             attackRange = 40.0f;
             chaseRange = 220.0f;
             stopChaseRange = 260.0f;
+            attackDuration = 0.8f;
+            hurtDuration = 0.45f;
         }
     }
 

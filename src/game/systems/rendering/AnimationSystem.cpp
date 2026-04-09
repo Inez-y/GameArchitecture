@@ -67,12 +67,13 @@ static void playIfChanged(AnimationComponent& anim, const std::string& name, boo
 static void updatePlayerAnimation(Entity& entity) {
     if (!entity.hasComponent<AnimationComponent>() ||
         !entity.hasComponent<HealthComponent>() ||
-            !entity.hasComponent<WeaponComponent>()){
+        !entity.hasComponent<WeaponComponent>()) {
         return;
     }
 
     auto& anim = entity.getComponent<AnimationComponent>();
     auto& health = entity.getComponent<HealthComponent>();
+    auto& weapon = entity.getComponent<WeaponComponent>();
 
     if (health.isDead()) {
         playIfChanged(anim, "dead", true);
@@ -92,30 +93,22 @@ static void updatePlayerAnimation(Entity& entity) {
         return;
     }
 
+    if (anim.getCurrentClipName() == "reload" && !anim.finished) {
+        return;
+    }
+
     if (anim.getCurrentClipName() == "dash" && !anim.finished) {
         return;
     }
 
-    if (entity.hasComponent<WeaponComponent>()) {
-        auto& weapon = entity.getComponent<WeaponComponent>();
+    if (weapon.isReloading()) {
+        playIfChanged(anim, "reload", true);
+        return;
+    }
 
-        if (weapon.isReloading()) {
-            if (anim.hasClip("reload")) {
-                if (anim.getCurrentClipName() != "reload") {
-                    anim.play("reload", true);
-                }
-            }
-            return;
-        }
-
-        if (weapon.isAttacking()) {
-            if (anim.hasClip("attack")) {
-                if (anim.getCurrentClipName() != "attack") {
-                    anim.play("attack", true);
-                }
-            }
-            return;
-        }
+    if (weapon.isAttacking()) {
+        playIfChanged(anim, "attack", true);
+        return;
     }
 
     if (entity.hasComponent<InputComponent>()) {
@@ -169,9 +162,8 @@ static void updateEnemyAnimation(Entity& entity) {
         return;
     }
 
-    if ((anim.getCurrentClipName() == "attack" ||
-         anim.getCurrentClipName() == "hurt" ||
-         anim.getCurrentClipName() == "dead") && !anim.finished) {
+    const std::string current = anim.getCurrentClipName();
+    if ((current == "attack" || current == "hurt" || current == "dead") && !anim.finished) {
         return;
     }
 

@@ -11,12 +11,7 @@ set(CMAKE_PREFIX_PATH "/opt/homebrew/opt/sdl3_ttf")
 include_directories("/opt/homebrew/opt/sdl3/include")
 include_directories("/opt/homebrew/opt/sdl3_image/include")
 include_directories("/opt/homebrew/opt/sdl3_ttf/include")
-##
-#include_directories("/src") # new
-#include_directories("/src/ecs") # new
-#include_directories("/src/ecs/system") # new
-#include_directories("/src/vendor") # new
-#
+
 link_directories("/opt/homebrew/opt/sdl3/lib")
 link_directories("/opt/homebrew/opt/sdl3_image/lib")
 link_directories("/opt/homebrew/opt/sdl3_ttf/lib")
@@ -25,6 +20,7 @@ link_directories("/opt/homebrew/opt/sdl3_ttf/lib")
 find_package(SDL3 REQUIRED)
 find_package(SDL3_image REQUIRED)
 find_package(SDL3_ttf REQUIRED)
+find_package(SDL2_mixer REQUIRED)
 
 add_executable(LastCarriage src
         src/main.cpp

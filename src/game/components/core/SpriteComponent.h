@@ -7,6 +7,7 @@
 #include "../../../engine/ecs/Component.h"
 #include "TransformComponent.h"
 #include <SDL3/SDL.h>
+#include <cmath>
 
 class SpriteComponent : public Component {
 public:
@@ -42,10 +43,10 @@ public:
         }
 
         SDL_FRect dstRect{
-            transform->x - camera.x,
-            transform->y - camera.y,
-            transform->w,
-            transform->h
+            std::round(transform->x - camera.x),
+            std::round(transform->y - camera.y),
+            std::round(transform->w),
+            std::round(transform->h)
         };
 
         SDL_FlipMode flipMode = flipX ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
