@@ -82,7 +82,6 @@ add_executable(LastCarriage src
         src/game/data/AssetPaths.h
         src/engine/resources/AssetManager.cpp
         src/engine/resources/AssetManager.h
-        src/engine/core/Services.h
         src/game/scenes/IScene.h
         src/game/scenes/PlayScene.cpp
         src/game/scenes/PlayScene.h
