@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "game/scenes/PlayScene.h"
+#include "game/systems/audio/BgmPlayer.h"
 
 Game::Game() = default;
 

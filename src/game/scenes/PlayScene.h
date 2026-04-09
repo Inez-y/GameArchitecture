@@ -26,6 +26,7 @@
 #include "../systems/rendering/RenderSystem.h"
 #include "../systems/rendering/AnimationSystem.h"
 #include "../systems/movement/MovementSystem.h"
+#include "..//systems/audio/AudioSystem.h"
 
 #include "../components/gameplay/WeaponComponent.h"
 #include "../components/core/TransformComponent.h"
@@ -60,6 +61,7 @@ private:
     MovementSystem movementSystem;
     StageManager stageManager;
     AnimationSystem animationSystem;
+    AudioSystem audioSystem;
 };
 
 #endif // LASTCARRIAGE_PLAYSCENE_H

@@ -91,10 +91,27 @@ add_executable(LastCarriage src
         src/game/systems/rendering/AnimationSystem.cpp
         src/game/systems/rendering/AnimationSystem.h
         src/game/data/AnimationClips.h
+        src/game/systems/audio/BgmPlayer.h
+        src/game/systems/audio/BgmPlayer.mm
+        src/game/systems/audio/AudioSystem.cpp
+        src/game/systems/audio/AudioSystem.h
 )
 
 target_link_libraries(LastCarriage
         SDL3::SDL3
         SDL3_image::SDL3_image
         SDL3_ttf::SDL3_ttf)
+
+# Audio
+find_library(AVFOUNDATION_FRAMEWORK AVFoundation)
+find_library(FOUNDATION_FRAMEWORK Foundation)
+
+target_sources(LastCarriage PRIVATE
+        src/game/systems/audio/BgmPlayer.mm
+)
+
+target_link_libraries(LastCarriage
+        ${AVFOUNDATION_FRAMEWORK}
+        ${FOUNDATION_FRAMEWORK}
+)
 

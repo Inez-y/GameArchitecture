@@ -49,6 +49,13 @@ bool PlayScene::init() {
         return false;
     }
 
+    if (!audioSystem.init()) {
+        return false;
+    }
+
+    audioSystem.playBgm(AssetPaths::BGM, 0.5f);
+
+
     return true;
 }
 
@@ -144,6 +151,8 @@ void PlayScene::update(float dt) {
         }
     }
 
+    audioSystem.update(dt);
+
     manager.refresh();
 }
 
@@ -177,4 +186,5 @@ void PlayScene::clean() {
     context.backgroundTexture = nullptr;
     context.uiFont = nullptr;
     tilesetTexture = nullptr;
+    audioSystem.clean();
 }

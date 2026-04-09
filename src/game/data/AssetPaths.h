@@ -12,6 +12,8 @@ namespace AssetPaths {
 
     constexpr const char* UI_FONT = "../assets/fonts/PixelifySans_Font.ttf";
 
+    constexpr const char* BGM = "../assets/audio/bgm.mov";
+
     constexpr const char* PLAYER = "../assets/animations/player_idle/000.png";
     constexpr const char* ENEMY = "../assets/animations/enemy_idle/012.png";
     constexpr const char* BOSS = "../assets/animations/boss_idle/000.png";
