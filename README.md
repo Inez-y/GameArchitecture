@@ -288,15 +288,3 @@ Potential future work includes:
 * expanded boss encounters
 * AI-driven enemy logic
 
----
-
-## Demo Highlights
-
-When presenting this project, the strongest architectural highlights are:
-
-* ECS-based gameplay structure
-* map-driven stage spawning
-* factory-based entity creation
-* separated systems for movement, combat, interaction, rendering, and stage logic
-* reusable stage loading pipeline
-
